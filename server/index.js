@@ -17,7 +17,7 @@ const app = express();
 app.get('/', (req, res) => res.send('server works'))
 app.get('/login', function(req, res) {
   const state = generateRandomString(16);
-  const scope = 'user-read-private user-read-email';
+  const scope = 'user-read-private user-read-email user-top-read';
 
   const params = new URLSearchParams({
     response_type: 'code',
@@ -30,7 +30,7 @@ app.get('/login', function(req, res) {
   res.redirect('https://accounts.spotify.com/authorize?' + params.toString());
 });
 
-
+let token = '';
 app.get('/callback', async function(req, res) {
   var code = req.query.code || null;
   var state = req.query.state || null;
@@ -60,6 +60,8 @@ app.get('/callback', async function(req, res) {
     );
 
     const { access_token, refresh_token } = response.data;
+    //save access_token to use later as a authentication bearer
+    token = access_token;
     res.redirect('/#' +
       querystring.stringify({ access_token, refresh_token }));
   } catch (err) {
@@ -68,10 +70,45 @@ app.get('/callback', async function(req, res) {
   }
 });
 
-app.get('https://api.spotify.com/v1/me/top/artists', (req, res) => {
-  res.send(response.total);
-  res.send(response.items[0]);
-  console.log(response.items[0]);
+/* test if the token is received correctly
+app.get('/token-test', (req, res) => {
+  res.send(token)
+});
+*/
+
+app.get('/top-artists', async function(req, res) {
+  try {
+    const response = await axios.get(
+      'https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=5',
+      { headers: { 'Authorization': `Bearer ${token}`} }
+    );
+    res.send(response.data);
+  } catch (err) {
+    res.json(err.response?.data || err.message);
+  }
+});
+
+app.get('/top-tracks', async function(req, res) {
+  var tracks_id = [];
+  try {
+    const response = await axios.get(
+      'https://api.spotify.com/v1/me/top/tracks?time_range=long_term&limit=10',
+      { headers: { 'Authorization': `Bearer ${token}`} }
+    );
+    for (let i = 0; i < response.data.limit; i++) {
+      tracks_id.push(response.data.items[i].id);
+    }
+    var id_line = tracks_id.join(',');
+    //res.send(tracks_id);
+    //res.json(response.data);
+    const response_track = await axios.get(
+      `https://api.spotify.com/v1/audio-features?ids=${id_line}`,
+      { headers: { 'Authorization': `Bearer ${token}` }}
+    );
+    res.json(response_track.data);
+  } catch (err) {
+    res.json(err.response?.data || err.message);
+  }
 });
 
 const PORT = 8000;
