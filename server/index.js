@@ -1,5 +1,7 @@
 import dotenv from 'dotenv'
 import express from 'express'
+import querystring from 'querystring'
+import axios from 'axios'
 dotenv.config()
 
 function generateRandomString(length) {
@@ -28,8 +30,8 @@ app.get('/login', function(req, res) {
   res.redirect('https://accounts.spotify.com/authorize?' + params.toString());
 });
 
-/*
-app.get('/callback', function(req, res) {
+
+app.get('/callback', async function(req, res) {
   var code = req.query.code || null;
   var state = req.query.state || null;
 
@@ -38,24 +40,39 @@ app.get('/callback', function(req, res) {
       querystring.stringify({
         error: 'state_mismatch'
       }));
-  } else {
-    var authOptions = {
-      url: 'https://accounts.spotify.com/api/token',
-      form: {
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      'https://accounts.spotify.com/api/token',
+      querystring.stringify({
         code: code,
         redirect_uri: redirect_uri,
         grant_type: 'authorization_code'
-      },
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + (new Buffer.from(client_id + ':' + client_secret).toString('base64'))
-      },
-      json: true
-    };
+      }),
+      {
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
+        }
+      }
+    );
+
+    const { access_token, refresh_token } = response.data;
+    res.redirect('/#' +
+      querystring.stringify({ access_token, refresh_token }));
+  } catch (err) {
+    res.redirect('/#' +
+      querystring.stringify({ error: 'invalid_token' }));
   }
 });
-*/
 
+app.get('https://api.spotify.com/v1/me/top/artists', (req, res) => {
+  res.send(response.total);
+  res.send(response.items[0]);
+  console.log(response.items[0]);
+});
 
 const PORT = 8000;
 app.listen(PORT, () => {
