@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import express from 'express'
 import querystring from 'querystring'
 import axios from 'axios'
+import { formatArtist, formatTrack } from './utils/formatData.js'
 dotenv.config()
 
 function generateRandomString(length) {
@@ -82,30 +83,21 @@ app.get('/top-artists', async function(req, res) {
       'https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=5',
       { headers: { 'Authorization': `Bearer ${token}`} }
     );
-    res.send(response.data);
+    const artists = response.data.items.map(item => formatArtist(item));
+    res.json(artists);
   } catch (err) {
     res.json(err.response?.data || err.message);
   }
 });
 
 app.get('/top-tracks', async function(req, res) {
-  var tracks_id = [];
   try {
     const response = await axios.get(
       'https://api.spotify.com/v1/me/top/tracks?time_range=long_term&limit=10',
       { headers: { 'Authorization': `Bearer ${token}`} }
     );
-    for (let i = 0; i < response.data.limit; i++) {
-      tracks_id.push(response.data.items[i].id);
-    }
-    var id_line = tracks_id.join(',');
-    //res.send(tracks_id);
-    //res.json(response.data);
-    const response_track = await axios.get(
-      `https://api.spotify.com/v1/audio-features?ids=${id_line}`,
-      { headers: { 'Authorization': `Bearer ${token}` }}
-    );
-    res.json(response_track.data);
+    const tracks = response.data.items.map(item => formatTrack(item))
+    res.json(tracks)
   } catch (err) {
     res.json(err.response?.data || err.message);
   }
