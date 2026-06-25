@@ -2,8 +2,9 @@ import dotenv from 'dotenv'
 import express from 'express'
 import querystring from 'querystring'
 import axios from 'axios'
-import { formatArtist, formatTrack } from './utils/formatData.js'
 dotenv.config()
+import { formatArtist, formatTrack } from './utils/formatData.js'
+
 
 function generateRandomString(length) {
     let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -80,10 +81,10 @@ app.get('/token-test', (req, res) => {
 app.get('/top-artists', async function(req, res) {
   try {
     const response = await axios.get(
-      'https://api.spotify.com/v1/me/top/artists?time_range=long_term&limit=5',
+      'https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=5',
       { headers: { 'Authorization': `Bearer ${token}`} }
     );
-    const artists = response.data.items.map(item => formatArtist(item));
+    const artists = await Promise.all(response.data.items.map(item => formatArtist(item)));
     res.json(artists);
   } catch (err) {
     res.json(err.response?.data || err.message);
@@ -93,11 +94,15 @@ app.get('/top-artists', async function(req, res) {
 app.get('/top-tracks', async function(req, res) {
   try {
     const response = await axios.get(
-      'https://api.spotify.com/v1/me/top/tracks?time_range=long_term&limit=10',
+      'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=8',
       { headers: { 'Authorization': `Bearer ${token}`} }
     );
-    const tracks = response.data.items.map(item => formatTrack(item))
-    res.json(tracks)
+    const tracks = [];
+    for (const item of response.data.items) {
+      const formatted = await formatTrack(item);
+      tracks.push(formatted);
+    }
+    res.json(tracks);
   } catch (err) {
     res.json(err.response?.data || err.message);
   }
