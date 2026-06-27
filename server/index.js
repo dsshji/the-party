@@ -4,7 +4,7 @@ import querystring from 'querystring'
 import axios from 'axios'
 dotenv.config()
 import { formatArtist, formatTrack } from './utils/formatData.js'
-
+import { guestMap } from './utils/getTags.js';
 
 function generateRandomString(length) {
     let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -72,11 +72,13 @@ app.get('/callback', async function(req, res) {
   }
 });
 
-/* test if the token is received correctly
+/* test if the token is received correctly: FOR DEBUGGING
 app.get('/token-test', (req, res) => {
   res.send(token)
 });
 */
+
+var guestList_artists = [];
 
 app.get('/top-artists', async function(req, res) {
   try {
@@ -85,12 +87,17 @@ app.get('/top-artists', async function(req, res) {
       { headers: { 'Authorization': `Bearer ${token}`} }
     );
     const artists = await Promise.all(response.data.items.map(item => formatArtist(item)));
-    res.json(artists);
+    const classified = await guestMap(artists);
+    guestList_artists = artists;
+    res.json(guestList_artists);
+    //res.json(classified);
+    //res.json(artists);
   } catch (err) {
     res.json(err.response?.data || err.message);
   }
 });
 
+var guestList_tracks = [];
 app.get('/top-tracks', async function(req, res) {
   try {
     const response = await axios.get(
@@ -102,7 +109,19 @@ app.get('/top-tracks', async function(req, res) {
       const formatted = await formatTrack(item);
       tracks.push(formatted);
     }
-    res.json(tracks);
+    guestList_tracks = tracks;
+    res.json(guestList_tracks);
+    //res.json(tracks);
+  } catch (err) {
+    res.json(err.response?.data || err.message);
+  }
+});
+
+app.get('/guests', async function(req, res) {
+  try {
+    const guestsArt = await guestMap(guestList_artists);
+    const guestsTra = await guestMap(guestList_tracks);
+    res.json({ artists: guestsArt, tracks: guestsTra });
   } catch (err) {
     res.json(err.response?.data || err.message);
   }
