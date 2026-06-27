@@ -66,7 +66,7 @@ export async function guestMap(items) {
                 There can be multiple pairs of allies and opposites. One item can be mentioned multiple times.
                 Reasoning should be specific and unique for the pair of items. It must not be generic but must describe speciffically this pair of items.
                 Return ONLY a JSON object, no markdown, no extra text.
-                Return exactly: { "allies": [{ "a": "<id>", "b": "<id>", "reason": "<short reason>" }], "opposites": [{ "a": "<id>", "b": "<id>", "reason": "<short reason>" }], "outliers": ["<id>"] }`
+                Return exactly: { "allies": [{ "a": "<id>", "b": "<id>", "reason": "<short reason>" }], "opposites": [{ "a": "<id>", "b": "<id>", "reason": "<short reason>" }], "outliers": [{"id": "<id>", "reason": "<short reason>"}] }`
             },
             {
                 role: 'user',

@@ -32,6 +32,7 @@ app.get('/login', function(req, res) {
   res.redirect('https://accounts.spotify.com/authorize?' + params.toString());
 });
 
+// TODO: replace globals with session store for multi-user support 
 let token = '';
 app.get('/callback', async function(req, res) {
   var code = req.query.code || null;
@@ -79,48 +80,38 @@ app.get('/token-test', (req, res) => {
 */
 
 var guestList_artists = [];
-
-app.get('/top-artists', async function(req, res) {
-  try {
-    const response = await axios.get(
-      'https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=5',
-      { headers: { 'Authorization': `Bearer ${token}`} }
-    );
-    const artists = await Promise.all(response.data.items.map(item => formatArtist(item)));
-    const classified = await guestMap(artists);
-    guestList_artists = artists;
-    res.json(guestList_artists);
-    //res.json(classified);
-    //res.json(artists);
-  } catch (err) {
-    res.json(err.response?.data || err.message);
-  }
-});
-
 var guestList_tracks = [];
-app.get('/top-tracks', async function(req, res) {
-  try {
-    const response = await axios.get(
-      'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=8',
-      { headers: { 'Authorization': `Bearer ${token}`} }
-    );
-    const tracks = [];
-    for (const item of response.data.items) {
-      const formatted = await formatTrack(item);
-      tracks.push(formatted);
-    }
-    guestList_tracks = tracks;
-    res.json(guestList_tracks);
-    //res.json(tracks);
-  } catch (err) {
-    res.json(err.response?.data || err.message);
+
+async function getTopArtists() {
+  const response = await axios.get(
+    'https://api.spotify.com/v1/me/top/artists?time_range=medium_term&limit=5',
+    { headers: { 'Authorization': `Bearer ${token}`} }
+  );
+  const artists = await Promise.all(response.data.items.map(item => formatArtist(item)));
+  guestList_artists = artists;
+  return guestList_artists;
+}
+
+async function getTopTracks() {
+  const response = await axios.get(
+    'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=8',
+    { headers: { 'Authorization': `Bearer ${token}`} }
+  );
+  const tracks = [];
+  for (const item of response.data.items) {
+    const formatted = await formatTrack(item);
+    tracks.push(formatted);
   }
-});
+  guestList_tracks = tracks;
+  return guestList_tracks;
+}
 
 app.get('/guests', async function(req, res) {
   try {
-    const guestsArt = await guestMap(guestList_artists);
-    const guestsTra = await guestMap(guestList_tracks);
+    const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
+    const tracks = guestList_tracks.length ? guestList_tracks : await getTopTracks();
+    const guestsArt = await guestMap(artists);
+    const guestsTra = await guestMap(tracks);
     res.json({ artists: guestsArt, tracks: guestsTra });
   } catch (err) {
     res.json(err.response?.data || err.message);
