@@ -4,7 +4,7 @@ import querystring from 'querystring'
 import axios from 'axios'
 dotenv.config()
 import { formatArtist, formatTrack } from './utils/formatData.js'
-import { guestMap } from './utils/getTags.js';
+import { guestMap } from './utils/guestMap.js';
 
 function generateRandomString(length) {
     let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
