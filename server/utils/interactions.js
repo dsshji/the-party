@@ -16,8 +16,8 @@ export function getRelationship(idA, idB, guestMap) {
 }
 
 const EVENT_TYPES = {
-  ARRIVAL: 'character arrives at the party',
-  TRACK_PLAYS: 'a track is now playing',
+  ARRIVAL: 'speaker arrives at the party',
+  TRACK_PLAYS: 'a track is now playing, speaker reacts to it',
   ARTIST_DOMINANT: 'one artist has too many songs',
   GLOBAL_DOMINANT: 'shared trait discovered across all guests',
   PARTY_END: 'closing remarks'
@@ -63,9 +63,9 @@ export async function dialogue(event, speaker, target, reason, target_type) {
             },
             {
                 role: 'user',
-                content: `Event: ${event.type}
+                content: `Event: ${event.type} — ${EVENT_TYPES[event.type]},
                 The line should be appropriate to this speaker: ${speaker.id}, and their vibes: ${speaker.vibes.join(', ')}, and subgenre: ${speaker.subgenre}
-                Target: ${target.id}, vibes: ${target.vibes.join(', ')}, ${target_type}
+                Target: ${target_type === "track" ? `song "${target.name}"` : target.id}, vibes: ${target.vibes.join(', ')}, ${target_type}
                 Relationship: ${event.relationship}
                 The line should subtly reference this context without stating it directly: ${reason}
                 Write one line from ${speaker.id}'s perspective about or toward ${target.id}.`
@@ -90,8 +90,35 @@ export async function getArrivalScript(sequence, guestList_artists, relArtists) 
         p => (p.a === event.speaker && p.b === event.target) || (p.a === event.target && p.b === event.speaker)
         );
     const reason = relationshipData?.reason || '';
-    const line = await dialogue(event, speaker, target, reason);
+    const line = await dialogue(event, speaker, target, reason, "artist");
     script.push({ speaker: event.speaker, line, relationship: event.relationship });
+    }
+    return script;
+}
+
+export function generateTrackPlaySequence(artists, relArtists, track) {
+    let sequence = [];
+    for (const art of artists) {
+        const rel = getRelationship(art.id, track.artist_id, relArtists);
+        sequence.push({ type: 'TRACK_PLAYS', speaker: art.id, target_artist: track.artist_id, relationship: rel });
+    }
+    return sequence;
+}
+
+export async function trackReaction(sequence, guestList_artists, relArtists, track) {
+    // track passed as obj already
+    const script = [];
+    for (const event of sequence) {
+        const speaker = guestList_artists.find(a => a.id === event.speaker);
+        const target_artist = guestList_artists.find(a => a.id === event.target_artist);
+        const relationshipData = relArtists.allies.find(
+            p => (p.a === event.speaker && p.b === event.target_artist) || (p.a === event.target_artist && p.b === event.speaker)
+            ) || relArtists.opposites.find(
+            p => (p.a === event.speaker && p.b === event.target_artist) || (p.a === event.target_artist && p.b === event.speaker)
+            );
+        const reason = relationshipData?.reason || '';
+        const line = await dialogue(event, speaker, track, reason, "track");
+        script.push({ speaker: event.speaker, line, relationship: event.relationship });
     }
     return script;
 }

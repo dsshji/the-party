@@ -4,7 +4,7 @@ import querystring from 'querystring'
 import axios from 'axios'
 dotenv.config()
 import { formatArtist, formatTrack } from './utils/formatData.js'
-import { generateArrivalSequence, getArrivalScript } from './utils/interactions.js'
+import { generateArrivalSequence, getArrivalScript, generateTrackPlaySequence, trackReaction } from './utils/interactions.js'
 import { guestMap } from './utils/guestMap.js';
 
 function generateRandomString(length) {
@@ -108,25 +108,26 @@ async function getTopTracks() {
 }
 
 var relArtists = [];
-var relTracks = [];
-app.get('/guests', async function(req, res) {
-  try {
-    const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
-    const tracks = guestList_tracks.length ? guestList_tracks : await getTopTracks();
-    relArtists = await guestMap(artists);
-    relTracks = await guestMap(tracks);
-    // add verification that the lists aren't empty
-    res.json({ artists: relArtists, tracks: relTracks });
-  } catch (err) {
-    res.json(err.response?.data || err.message);
-  }
-});
+async function getArtistRelationship() {
+  const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
+  relArtists = await guestMap(artists);
+  // add verification that the lists aren't empty
+  while (!relArtists) relArtists = await guestMap(artists);
+  return relArtists;
+}
 
-// test call to verify sequence returns proper result
-app.get('/sequence-test', async function(req, res) {
-  const sequence = generateArrivalSequence(guestList_artists, relArtists);
-  const script = await getArrivalScript(sequence, guestList_artists, relArtists);
-  res.json(script);
+// test call to verify sequence returns proper result 
+app.get('/script', async function(req, res) {
+  const rel = await getArtistRelationship();
+  const sequence = generateArrivalSequence(guestList_artists, rel);
+  const script_arrival = await getArrivalScript(sequence, guestList_artists, rel);
+  const script_trackPlay = [];
+  for (let track of guestList_tracks) {
+    const sequence_trackPlay = generateTrackPlaySequence(guestList_artists, rel, track);
+    const track_reaction = await trackReaction(sequence_trackPlay, guestList_artists, rel, track);
+    script_trackPlay.push(track_reaction);
+  }
+  res.json({ ARRIVAL: script_arrival, TRACK_PLAY: script_trackPlay });
 });
 
 const PORT = 8000;
