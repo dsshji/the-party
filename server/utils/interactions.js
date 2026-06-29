@@ -49,7 +49,8 @@ import 'dotenv/config';
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-export async function dialogue(event, speaker, target, reason) {
+
+export async function dialogue(event, speaker, target, reason, target_type) {
     const chatCompletion = await groq.chat.completions.create({
         messages: [
             {
@@ -64,7 +65,7 @@ export async function dialogue(event, speaker, target, reason) {
                 role: 'user',
                 content: `Event: ${event.type}
                 The line should be appropriate to this speaker: ${speaker.id}, and their vibes: ${speaker.vibes.join(', ')}, and subgenre: ${speaker.subgenre}
-                Target: ${target.id}, vibes: ${target.vibes.join(', ')}
+                Target: ${target.id}, vibes: ${target.vibes.join(', ')}, ${target_type}
                 Relationship: ${event.relationship}
                 The line should subtly reference this context without stating it directly: ${reason}
                 Write one line from ${speaker.id}'s perspective about or toward ${target.id}.`
