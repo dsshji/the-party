@@ -4,7 +4,7 @@ import querystring from 'querystring'
 import axios from 'axios'
 dotenv.config()
 import { formatArtist, formatTrack } from './utils/formatData.js'
-import { generateArrivalSequence } from './utils/interactions.js'
+import { generateArrivalSequence, getArrivalScript } from './utils/interactions.js'
 import { guestMap } from './utils/guestMap.js';
 
 function generateRandomString(length) {
@@ -95,7 +95,7 @@ async function getTopArtists() {
 
 async function getTopTracks() {
   const response = await axios.get(
-    'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=8',
+    'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=',
     { headers: { 'Authorization': `Bearer ${token}`} }
   );
   const tracks = [];
@@ -107,15 +107,16 @@ async function getTopTracks() {
   return guestList_tracks;
 }
 
-var relArt = [];
-var relTra = [];
+var relArtists = [];
+var relTracks = [];
 app.get('/guests', async function(req, res) {
   try {
     const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
     const tracks = guestList_tracks.length ? guestList_tracks : await getTopTracks();
-    const guestsArt = await guestMap(artists);
-    const guestsTra = await guestMap(tracks);
-    res.json({ artists: guestsArt, tracks: guestsTra });
+    relArtists = await guestMap(artists);
+    relTracks = await guestMap(tracks);
+    // add verification that the lists aren't empty
+    res.json({ artists: relArtists, tracks: relTracks });
   } catch (err) {
     res.json(err.response?.data || err.message);
   }
@@ -123,10 +124,9 @@ app.get('/guests', async function(req, res) {
 
 // test call to verify sequence returns proper result
 app.get('/sequence-test', async function(req, res) {
-  const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
-  const guestsArt = await guestMap(artists);
-  const sequence = generateArrivalSequence(artists, guestsArt);
-  res.json(sequence);
+  const sequence = generateArrivalSequence(guestList_artists, relArtists);
+  const script = await getArrivalScript(sequence, guestList_artists, relArtists);
+  res.json(script);
 });
 
 const PORT = 8000;
