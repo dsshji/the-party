@@ -4,6 +4,7 @@ import querystring from 'querystring'
 import axios from 'axios'
 dotenv.config()
 import { formatArtist, formatTrack } from './utils/formatData.js'
+import { generateArrivalSequence } from './utils/interactions.js'
 import { guestMap } from './utils/guestMap.js';
 
 function generateRandomString(length) {
@@ -106,6 +107,8 @@ async function getTopTracks() {
   return guestList_tracks;
 }
 
+var relArt = [];
+var relTra = [];
 app.get('/guests', async function(req, res) {
   try {
     const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
@@ -116,6 +119,14 @@ app.get('/guests', async function(req, res) {
   } catch (err) {
     res.json(err.response?.data || err.message);
   }
+});
+
+// test call to verify sequence returns proper result
+app.get('/sequence-test', async function(req, res) {
+  const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
+  const guestsArt = await guestMap(artists);
+  const sequence = generateArrivalSequence(artists, guestsArt);
+  res.json(sequence);
 });
 
 const PORT = 8000;
