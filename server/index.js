@@ -95,7 +95,7 @@ async function getTopArtists() {
 
 async function getTopTracks() {
   const response = await axios.get(
-    'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=',
+    'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=5',
     { headers: { 'Authorization': `Bearer ${token}`} }
   );
   const tracks = [];
@@ -119,6 +119,7 @@ async function getArtistRelationship() {
 // test call to verify sequence returns proper result 
 app.get('/script', async function(req, res) {
   const rel = await getArtistRelationship();
+  if (!guestList_tracks.length) await getTopTracks();
   const sequence = generateArrivalSequence(guestList_artists, rel);
   const script_arrival = await getArrivalScript(sequence, guestList_artists, rel);
   const script_trackPlay = [];

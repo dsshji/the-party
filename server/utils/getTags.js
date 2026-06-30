@@ -14,7 +14,7 @@ export async function tagArtist(artist) {
                         { "genre": "<main genre>", "subgenre": "<subgenre>", "vibes": ["<tag1>", "<tag2>", "<tag3>", "<tag4>"] }
 
                         Rules:
-                        - genre: one broad yet concrete category (e.g. "korean hip-hop", "mobb rap", "punk rock", "indie electronic", "classical piano")
+                        - genre: one broad yet concrete category (e.g. "korean hip-hop", "mobb rap", "punk rock", "japanese indie electronic", "classical piano")
                         - subgenre: one super specific style (for example "korean blasting underground", "bedroom funk", "horror storytelling rock")
                         - vibes: exactly 4 tags describing energy, mood, or feel (e.g. "japan nostalgia", "moody gaming", "cafe jazz", "hollywood gold age", "dreamy pop", "vampire")
                         - self check yourself with genre and subgenre
@@ -23,6 +23,7 @@ export async function tagArtist(artist) {
         ],
         // for more correct and specific classification
         model: 'llama-3.3-70b-versatile',
+        response_format: { type: 'json_object' },
     });
     return JSON.parse(chatCompletion.choices[0].message.content);
 }
@@ -48,6 +49,7 @@ export async function tagTrack(track) {
         ],
         // for more correct and specific classification
         model: 'llama-3.3-70b-versatile',
+        response_format: { type: 'json_object' },
     });
     return JSON.parse(chatCompletion.choices[0].message.content);
 }

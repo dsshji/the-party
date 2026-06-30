@@ -50,50 +50,49 @@ import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-export async function dialogue(event, speaker, target, reason, target_type) {
+// batch all dialogue lines into one API call instead of one per line
+async function dialogueBatch(entries) {
+    if (!entries.length) return [];
+    const items = entries.map((e, i) => {
+        const targetLabel = e.target_type === 'track' ? `song "${e.target.name}"` : e.target.id;
+        return `${i + 1}. Speaker: ${e.speaker.id} (${e.speaker.subgenre}, vibes: ${e.speaker.vibes.join(', ')}) | Target: ${targetLabel} (vibes: ${e.target.vibes.join(', ')}, ${e.target_type}) | Relationship: ${e.event.relationship} | Context: ${e.reason} | Write one line from ${e.speaker.id}'s perspective about or toward ${targetLabel}.`;
+    }).join('\n');
     const chatCompletion = await groq.chat.completions.create({
         messages: [
             {
                 role: 'system',
-                content: `You write one short dialogue line for a character at a music party.
-                Style: Tomodachi Life — robotic, dry, deadpan, occasionally absurd. Never warm or enthusiastic. 
-                Ally lines should be dry and slightly backhanded, not warm. Approval is expressed reluctantly.
-                The line must be max 10 words. No greetings like "hey" or "hi". Never explain the joke.
-                Return ONLY valid JSON: { "line": "<dialogue line>" }`
+                content: `You write short dialogue lines for characters at a music party.
+Style: Tomodachi Life — robotic, dry, deadpan, occasionally absurd. Never warm or enthusiastic.
+Ally lines: dry and slightly backhanded. Approval expressed reluctantly.
+Max 10 words per line. No greetings. Never explain the joke.
+Make it appropriate for the speaker and the target of speaking based on passed values.
+Return ONLY a JSON object: { "lines": ["<line1>", "<line2>", ...] } — one string per numbered entry, in order.`
             },
             {
                 role: 'user',
-                content: `Event: ${event.type} — ${EVENT_TYPES[event.type]},
-                The line should be appropriate to this speaker: ${speaker.id}, and their vibes: ${speaker.vibes.join(', ')}, and subgenre: ${speaker.subgenre}
-                Target: ${target_type === "track" ? `song "${target.name}"` : target.id}, vibes: ${target.vibes.join(', ')}, ${target_type}
-                Relationship: ${event.relationship}
-                The line should subtly reference this context without stating it directly: ${reason}
-                Write one line from ${speaker.id}'s perspective about or toward ${target.id}.`
+                content: `Event: ${entries[0].event.type} — ${EVENT_TYPES[entries[0].event.type]}\n\n${items}`
             }
         ],
-        // for proper reasoning: if too slow, can be changed in future dev !
         model: 'llama-3.1-8b-instant',
         response_format: { type: 'json_object' },
     });
-    return JSON.parse(chatCompletion.choices[0].message.content).line;
+    return JSON.parse(chatCompletion.choices[0].message.content).lines;
 }
 
 export async function getArrivalScript(sequence, guestList_artists, relArtists) {
-    const script = [];
-    for (const event of sequence) {
-    if (!event.target) continue; // skip the first solo arrival
-    const speaker = guestList_artists.find(a => a.id === event.speaker);
-    const target = guestList_artists.find(a => a.id === event.target);
-    const relationshipData = relArtists.allies.find(
-        p => (p.a === event.speaker && p.b === event.target) || (p.a === event.target && p.b === event.speaker)
+    const events = sequence.filter(e => e.target);
+    const entries = events.map(event => {
+        const speaker = guestList_artists.find(a => a.id === event.speaker);
+        const target = guestList_artists.find(a => a.id === event.target);
+        const relationshipData = relArtists.allies.find(
+            p => (p.a === event.speaker && p.b === event.target) || (p.a === event.target && p.b === event.speaker)
         ) || relArtists.opposites.find(
-        p => (p.a === event.speaker && p.b === event.target) || (p.a === event.target && p.b === event.speaker)
+            p => (p.a === event.speaker && p.b === event.target) || (p.a === event.target && p.b === event.speaker)
         );
-    const reason = relationshipData?.reason || '';
-    const line = await dialogue(event, speaker, target, reason, "artist");
-    script.push({ speaker: event.speaker, line, relationship: event.relationship });
-    }
-    return script;
+        return { event, speaker, target, reason: relationshipData?.reason || '', target_type: 'artist' };
+    });
+    const lines = await dialogueBatch(entries);
+    return entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i], relationship: e.event.relationship }));
 }
 
 export function generateTrackPlaySequence(artists, relArtists, track) {
@@ -106,19 +105,18 @@ export function generateTrackPlaySequence(artists, relArtists, track) {
 }
 
 export async function trackReaction(sequence, guestList_artists, relArtists, track) {
-    // track passed as obj already
-    const script = [];
-    for (const event of sequence) {
+    const entries = sequence.map(event => {
         const speaker = guestList_artists.find(a => a.id === event.speaker);
-        const target_artist = guestList_artists.find(a => a.id === event.target_artist);
         const relationshipData = relArtists.allies.find(
             p => (p.a === event.speaker && p.b === event.target_artist) || (p.a === event.target_artist && p.b === event.speaker)
-            ) || relArtists.opposites.find(
+        ) || relArtists.opposites.find(
             p => (p.a === event.speaker && p.b === event.target_artist) || (p.a === event.target_artist && p.b === event.speaker)
-            );
-        const reason = relationshipData?.reason || '';
-        const line = await dialogue(event, speaker, track, reason, "track");
-        script.push({ speaker: event.speaker, line, relationship: event.relationship });
-    }
-    return script;
+        );
+        return { event, speaker, target: track, reason: relationshipData?.reason || '', target_type: 'track' };
+    });
+    const lines = await dialogueBatch(entries);
+    return {
+        track,
+        dialogues: entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i] }))
+    };
 }
