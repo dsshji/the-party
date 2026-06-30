@@ -4,7 +4,8 @@ import querystring from 'querystring'
 import axios from 'axios'
 dotenv.config()
 import { formatArtist, formatTrack } from './utils/formatData.js'
-import { generateArrivalSequence, getArrivalScript, generateTrackPlaySequence, trackReaction } from './utils/interactions.js'
+import { generateArrivalSequence, getArrivalScript, generateTrackPlaySequence, trackReaction, 
+  generateArtistDominantSequence, artistDominant, partyEnd } from './utils/interactions.js'
 import { guestMap } from './utils/guestMap.js';
 
 function generateRandomString(length) {
@@ -107,28 +108,39 @@ async function getTopTracks() {
   return guestList_tracks;
 }
 
-var relArtists = [];
+//var relArtists = [];
 async function getArtistRelationship() {
   const artists = guestList_artists.length ? guestList_artists : await getTopArtists();
-  relArtists = await guestMap(artists);
+  const relArtists = await guestMap(artists);
   // add verification that the lists aren't empty
   while (!relArtists) relArtists = await guestMap(artists);
   return relArtists;
 }
 
-// test call to verify sequence returns proper result 
+// load script for the whole party
 app.get('/script', async function(req, res) {
+  // load neccessary data
   const rel = await getArtistRelationship();
   if (!guestList_tracks.length) await getTopTracks();
+  // fetch ARRIVAL
   const sequence = generateArrivalSequence(guestList_artists, rel);
   const script_arrival = await getArrivalScript(sequence, guestList_artists, rel);
+  // fetch TRACK_PLAY
   const script_trackPlay = [];
   for (let track of guestList_tracks) {
     const sequence_trackPlay = generateTrackPlaySequence(guestList_artists, rel, track);
     const track_reaction = await trackReaction(sequence_trackPlay, guestList_artists, rel, track);
     script_trackPlay.push(track_reaction);
   }
-  res.json({ ARRIVAL: script_arrival, TRACK_PLAY: script_trackPlay });
+  // fetch ARTIST_DOMINANT
+  const sequence_artistDominant = generateArtistDominantSequence(guestList_artists, rel, guestList_tracks);
+  const script_artistDominant = await artistDominant(sequence_artistDominant, guestList_artists, rel);
+
+  // fetch PARTY_END
+  const script_partyEnd = await partyEnd(guestList_artists, rel);
+
+  res.json({ ARRIVAL: script_arrival, TRACK_PLAY: script_trackPlay, 
+    ARTIST_DOMINANT: script_artistDominant, PARTY_END: script_partyEnd });
 });
 
 const PORT = 8000;
