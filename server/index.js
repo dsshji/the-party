@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 import express from 'express'
+import cors from 'cors'
 import querystring from 'querystring'
 import axios from 'axios'
 dotenv.config()
@@ -16,7 +17,9 @@ function generateRandomString(length) {
 const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
 const redirect_uri = 'http://127.0.0.1:8000/callback';
+const frontend_uri = 'http://127.0.0.1:5173';
 const app = express();
+app.use(cors());
 
 app.get('/', (req, res) => res.send('server works'))
 app.get('/login', function(req, res) {
@@ -41,7 +44,7 @@ app.get('/callback', async function(req, res) {
   var state = req.query.state || null;
 
   if (state === null) {
-    res.redirect('/#' +
+    res.redirect(frontend_uri + '/#' +
       querystring.stringify({
         error: 'state_mismatch'
       }));
@@ -67,10 +70,10 @@ app.get('/callback', async function(req, res) {
     const { access_token, refresh_token } = response.data;
     //save access_token to use later as a authentication bearer
     token = access_token;
-    res.redirect('/#' +
+    res.redirect(frontend_uri + '/#' +
       querystring.stringify({ access_token, refresh_token }));
   } catch (err) {
-    res.redirect('/#' +
+    res.redirect(frontend_uri + '/#' +
       querystring.stringify({ error: 'invalid_token' }));
   }
 });

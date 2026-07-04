@@ -1,6 +1,13 @@
+import { useState, useEffect } from 'react'
 const SPOTIFY_LOGIN_URL = 'http://127.0.0.1:8000/login'
 
-export default function LoginPage() {
+export default function LoginPage({ onNext }) {
+  useEffect(() => {
+    const hash = window.location.hash
+    console.log(hash)
+    if (hash.includes('access_token')) onNext();
+  }, [])
+
   return (
     <>
       <div className="hero-content">
