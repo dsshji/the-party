@@ -44,7 +44,7 @@ app.get('/callback', async function(req, res) {
   var state = req.query.state || null;
 
   if (state === null) {
-    res.redirect(frontend_uri + '/#' +
+    res.redirect(frontend_uri + '/login#' +
       querystring.stringify({
         error: 'state_mismatch'
       }));
@@ -70,10 +70,10 @@ app.get('/callback', async function(req, res) {
     const { access_token, refresh_token } = response.data;
     //save access_token to use later as a authentication bearer
     token = access_token;
-    res.redirect(frontend_uri + '/#' +
+    res.redirect(frontend_uri + '/login#' +
       querystring.stringify({ access_token, refresh_token }));
   } catch (err) {
-    res.redirect(frontend_uri + '/#' +
+    res.redirect(frontend_uri + '/login#' +
       querystring.stringify({ error: 'invalid_token' }));
   }
 });

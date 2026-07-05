@@ -1,4 +1,7 @@
-export default function StartPage({ onNext }) {
+import { useNavigate } from 'react-router-dom'
+
+export default function StartPage() {
+  const navigate = useNavigate()
   return (
     <>
       <div className="hero-content">
@@ -35,7 +38,7 @@ export default function StartPage({ onNext }) {
             className="gradient-layer"
             style={{  animationDelay: '1.6s', animationDuration: '20.2s'}}
           ></div>
-          <button className="gradient-btn" onClick={onNext}>Let's party!</button>
+          <button className="gradient-btn" onClick={() => navigate('/login')}>Let's party!</button>
           <div className="text-overlay">Let's party!</div>
         </div>
       </div>

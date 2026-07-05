@@ -1,12 +1,15 @@
 import axios from 'axios'
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const SPOTIFY_SCRIPT = 'http://127.0.0.1:8000/script'
 
-export default function LoadingPage({ onNext, onData }) {
+export default function LoadingPage() {
+  const navigate = useNavigate()
+
   useEffect(() => {
     axios.get(SPOTIFY_SCRIPT)
-      .then(response => { onData(response.data); onNext() })
+      .then(response => { navigate('/main', { state: { data: response.data } }) })
       .catch(error => console.log(error))
   }, [])
 
