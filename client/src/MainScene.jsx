@@ -12,8 +12,8 @@ export default function MainScene() {
       </div>
 
       <footer className="page-footer">
-        <p>all rights reserved</p>
-        <p>created by dsshji</p>
+        <p className="footer-text">all rights reserved</p>
+        <p className="footer-text">created by dsshji</p>
       </footer>
     </>
   )
