@@ -1,61 +1,52 @@
 :root {
-  --text: #fff;
-  --text-h: #08060d;
-  --bg: #0d1341;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(255, 255, 255, 0.674);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* backgrounds */
+  --bg-void: #0a0e2a;
+  --bg-smoke: #141834;
+  --bg-haze: #1c2148;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* accents */
+  --accent-pulse: #ff018f;
+  --accent-uv: #7b2fff;
+  --accent-cyan: #00e5ff;
+  --accent-ember: #ffcc00;
 
-  font: 18px/145% var(--sans);
+  /* relationships */
+  --rel-ally: #00e5ff;
+  --rel-opposite: #ff018f;
+  --rel-outlier: #ffcc00;
+  --rel-neutral: #6b6f99;
+
+  /* text */
+  --text-primary: #f0f0ff;
+  --text-secondary: #a0a4cc;
+  --text-dim: #5a5e88;
+
+  /* fonts */
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  font: 16px/145% var(--font-body);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color-scheme: dark;
+  color: var(--text-primary);
+  background: var(--bg-void);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #fff;
-    --text-h: #f3f4f6;
-    --bg: #0d1341;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(255, 255, 255, 0.674);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
 }
 
 /* From Uiverse.io by dexter-st */ 
 .btn-wrapper {
   --rad: 32px;
-  --color-wrapper-border: #fff;
-  --color-btn-bg: rgb(255, 0, 0);
+  --color-wrapper-border: var(--text-primary);
+  --color-btn-bg: var(--accent-pulse);
   --color-btn-text: #000;
   --color-btn-text-shadow: #ffffffd1;
-  --color-btn-inset-shadow: rgb(77, 77, 241);
-  --color-layer-a: #74ff88;
-  --color-layer-b: rgb(38, 67, 255);
+  --color-btn-inset-shadow: var(--accent-uv);
+  --color-layer-a: var(--accent-uv);
+  --color-layer-b: var(--accent-cyan);
   --color-overlay-text: #000;
   --color-overlay-glow: #fff;
   --color-overlay-shadow: rgba(255, 255, 255, 0.267);
@@ -267,7 +258,7 @@ body {
 }
 
 .page-footer {
-  color: var(--text);
+  color: var(--text-secondary);
   padding: 20px;
   display: flex;
   flex-direction: row;
@@ -276,12 +267,12 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--font-heading);
   font-weight: 500;
-  color: var(--text-h);
 }
 
 h1 {
+  color: var(--accent-pulse);
   font-size: 128px;
   letter-spacing: -1.68px;
   margin: 32px 0;
@@ -291,6 +282,7 @@ h1 {
   }
 }
 h2 {
+  color: var(--text-secondary);
   font-size: 28px;
   line-height: 118%;
   letter-spacing: -0.24px;
@@ -305,25 +297,25 @@ p {
 }
 
 .footer-text {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-weight: 100;
-  color: var(--social-bg);
+  color: var(--text-dim);
   font-size: 12px;
 }
 
 code,
 .counter {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   display: inline-flex;
   border-radius: 4px;
-  color: var(--text-h);
+  color: var(--text-primary);
 }
 
 code {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
-  background: var(--code-bg);
+  background: var(--bg-smoke);
 }
 
 /* From Uiverse.io by Yaya12085 */
