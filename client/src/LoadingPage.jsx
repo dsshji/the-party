@@ -8,9 +8,17 @@ export default function LoadingPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    axios.get(SPOTIFY_SCRIPT)
-      .then(response => { navigate('/main', { state: { data: response.data } }) })
-      .catch(error => console.log(error))
+    const parsed = JSON.parse(window.sessionStorage.getItem('script'))
+    if (parsed !== null) {
+      navigate('/main', { state: { data: parsed } })
+    } else {
+      axios.get(SPOTIFY_SCRIPT)
+        .then(response => {
+          window.sessionStorage.setItem('script', JSON.stringify(response.data))
+          navigate('/main', { state: { data: response.data } })
+        })
+        .catch(error => console.log(error))
+    }
   }, [])
 
   return (

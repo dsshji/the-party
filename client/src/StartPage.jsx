@@ -2,6 +2,13 @@ import { useNavigate } from 'react-router-dom'
 
 export default function StartPage() {
   const navigate = useNavigate()
+
+  function handleStart() {
+    const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
+    if (parsed !== null) navigate('/main', { state: { data: parsed } })
+    else navigate('/login')
+  }
+
   return (
     <>
       <div className="hero-content">
@@ -38,7 +45,7 @@ export default function StartPage() {
             className="gradient-layer"
             style={{  animationDelay: '1.6s', animationDuration: '20.2s'}}
           ></div>
-          <button className="gradient-btn" onClick={() => navigate('/login')}>Let's party!</button>
+          <button className="gradient-btn" onClick={handleStart}>Let's party!</button>
           <div className="text-overlay">Let's party!</div>
         </div>
       </div>

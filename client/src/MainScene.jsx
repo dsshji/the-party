@@ -5,7 +5,14 @@ export default function MainScene() {
   const location = useLocation()
   const navigate = useNavigate()
   //TODO: add sessionsStorage persistance
-  const partyData = location.state?.data
+  const [partyData, setPartyData] = useState(location.state?.data ?? null)
+  useEffect(() => {
+    if (partyData === null) {
+      const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
+      if (parsed !== null) setPartyData(parsed)
+      else navigate('/')
+    }
+  }, [])
 
   const PHASES = ['ARRIVAL', 'TRACK_PLAY', 'ARTIST_DOMINANT', 'PARTY_END']
 
@@ -14,6 +21,8 @@ export default function MainScene() {
   // for TRACK_PLAY phase
   const [trackNum, setTrack] = useState(0)
   const cardUnderRef = useRef(null)
+
+  if (partyData === null) return null
 
   const chunk = partyData[PHASES[phase]]
   let speaker = ''

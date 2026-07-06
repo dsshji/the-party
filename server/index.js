@@ -38,6 +38,7 @@ app.get('/login', function(req, res) {
 });
 
 // TODO: replace globals with session store for multi-user support 
+// TODO: add error handling for /script
 let token = '';
 app.get('/callback', async function(req, res) {
   var code = req.query.code || null;

@@ -5,6 +5,11 @@ const SPOTIFY_LOGIN_URL = 'http://127.0.0.1:8000/login'
 export default function LoginPage() {
   const navigate = useNavigate()
   useEffect(() => {
+    const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
+    if (parsed !== null) {
+      navigate('/main', { state: { data: parsed } })
+      return
+    }
     const hash = window.location.hash
     if (hash.includes('access_token')) navigate('/loading');
   }, [])
