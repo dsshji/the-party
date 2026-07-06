@@ -26,3 +26,5 @@ export default function LoadingPage() {
     </>
   )
 }
+
+// TODO: with three.js wiring load spinning disco ball + text like "calling guests", "asking them to meet each other" etc in diff colors mapping
