@@ -311,11 +311,42 @@ p {
   margin: 0;
 }
 
+.dialogue {
+  color: var(--text-dim);
+  font-size: 16px;
+  font-weight: 100;
+  font-family: var(--font-body);
+}
+
 .footer-text {
   font-family: var(--font-mono);
   font-weight: 100;
   color: var(--text-dim);
   font-size: 12px;
+}
+
+.card-under {
+  padding: 12px;
+  border-radius: 10px;
+  background-color: var(--rel-neutral);
+}
+
+.card {
+  margin: 0 auto;
+  background-color: var(--text-primary);
+  border-radius: 8px;
+  z-index: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: fit-content;
+  height: fit-content;
+}
+
+.card-content {
+  margin: 15px;
 }
 
 code,
