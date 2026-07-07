@@ -13,7 +13,7 @@ export default function LoadingPage() {
     if (parsed !== null) {
       navigate('/main', { state: { data: parsed } })
     } else {
-      axios.get(SPOTIFY_SCRIPT)
+      axios.get(SPOTIFY_SCRIPT, { withCredentials: true })
         .then(response => {
           window.sessionStorage.setItem('script', JSON.stringify(response.data))
           navigate('/main', { state: { data: response.data } })
