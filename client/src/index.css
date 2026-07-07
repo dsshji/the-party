@@ -366,7 +366,7 @@ p {
 .card {
   margin: 0 auto;
   background-color: var(--text-primary);
-  border-radius: 8px;
+  border-radius: 20px;
   z-index: 1;
   position: relative;
   display: flex;

@@ -37,8 +37,7 @@ app.get('/login', function(req, res) {
   res.redirect('https://accounts.spotify.com/authorize?' + params.toString());
 });
 
-// TODO: replace globals with session store for multi-user support 
-// TODO: add error handling for /script
+// TODO: replace globals with session store for multi-user support
 let token = '';
 app.get('/callback', async function(req, res) {
   var code = req.query.code || null;
@@ -123,28 +122,41 @@ async function getArtistRelationship() {
 
 // load script for the whole party
 app.get('/script', async function(req, res) {
-  // load neccessary data
-  const rel = await getArtistRelationship();
-  if (!guestList_tracks.length) await getTopTracks();
-  // fetch ARRIVAL
-  const sequence = generateArrivalSequence(guestList_artists, rel);
-  const script_arrival = await getArrivalScript(sequence, guestList_artists, rel);
-  // fetch TRACK_PLAY
-  const script_trackPlay = [];
-  for (let track of guestList_tracks) {
-    const sequence_trackPlay = generateTrackPlaySequence(guestList_artists, rel, track);
-    const track_reaction = await trackReaction(sequence_trackPlay, guestList_artists, rel, track);
-    script_trackPlay.push(track_reaction);
+  if (!token) {
+    return res.status(401).json({ error: 'not_authenticated', message: 'No Spotify session found. Please log in again.' });
   }
-  // fetch ARTIST_DOMINANT
-  const sequence_artistDominant = generateArtistDominantSequence(guestList_artists, rel, guestList_tracks);
-  const script_artistDominant = await artistDominant(sequence_artistDominant, guestList_artists, rel);
 
-  // fetch PARTY_END
-  const script_partyEnd = await partyEnd(guestList_artists, rel);
+  try {
+    // load neccessary data
+    const rel = await getArtistRelationship();
+    if (!guestList_tracks.length) await getTopTracks();
+    // fetch ARRIVAL
+    const sequence = generateArrivalSequence(guestList_artists, rel);
+    const script_arrival = await getArrivalScript(sequence, guestList_artists, rel);
+    // fetch TRACK_PLAY
+    const script_trackPlay = [];
+    for (let track of guestList_tracks) {
+      const sequence_trackPlay = generateTrackPlaySequence(guestList_artists, rel, track);
+      const track_reaction = await trackReaction(sequence_trackPlay, guestList_artists, rel, track);
+      script_trackPlay.push(track_reaction);
+    }
+    // fetch ARTIST_DOMINANT
+    const sequence_artistDominant = generateArtistDominantSequence(guestList_artists, rel, guestList_tracks);
+    const script_artistDominant = await artistDominant(sequence_artistDominant, guestList_artists, rel);
 
-  res.json({ ARRIVAL: script_arrival, TRACK_PLAY: script_trackPlay, 
-    ARTIST_DOMINANT: script_artistDominant, PARTY_END: script_partyEnd });
+    // fetch PARTY_END
+    const script_partyEnd = await partyEnd(guestList_artists, rel);
+
+    res.json({ ARRIVAL: script_arrival, TRACK_PLAY: script_trackPlay,
+      ARTIST_DOMINANT: script_artistDominant, PARTY_END: script_partyEnd });
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 401) {
+      return res.status(401).json({ error: 'invalid_token', message: 'Your Spotify session expired. Please log in again.' });
+    }
+    console.error('Failed to build script:', err.message);
+    res.status(502).json({ error: 'script_generation_failed', message: 'Could not generate the party script. Please try again.' });
+  }
 });
 
 const PORT = 8000;
