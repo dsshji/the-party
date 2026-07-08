@@ -9,14 +9,16 @@ export default function LoadingPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const parsed = JSON.parse(window.sessionStorage.getItem('script'))
+    const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
+    const artParsed = JSON.parse(window.sessionStorage.getItem('artists') ?? 'null')
     if (parsed !== null) {
-      navigate('/main', { state: { data: parsed } })
+      navigate('/main', { state: { data: parsed, artists: artParsed } })
     } else {
       axios.get(SPOTIFY_SCRIPT, { withCredentials: true })
         .then(response => {
-          window.sessionStorage.setItem('script', JSON.stringify(response.data))
-          navigate('/main', { state: { data: response.data } })
+          window.sessionStorage.setItem('script', JSON.stringify(response.data.script))
+          window.sessionStorage.setItem('artists', JSON.stringify(response.data.artists))
+          navigate('/main', { state: { data: response.data.script, artists: response.data.artists } })
         })
         .catch(error => {
           console.log(error)

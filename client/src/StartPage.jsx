@@ -5,7 +5,10 @@ export default function StartPage() {
 
   function handleStart() {
     const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
-    if (parsed !== null) navigate('/main', { state: { data: parsed } })
+    if (parsed !== null) {
+      const artists = JSON.parse(window.sessionStorage.getItem('artists') ?? 'null')
+      navigate('/main', { state: { data: parsed, artists } })
+    }
     else navigate('/login')
   }
 

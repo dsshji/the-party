@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import Character from './Character.jsx'
 
@@ -8,10 +8,16 @@ export default function MainScene() {
   const navigate = useNavigate()
   //TODO: add sessionsStorage persistance
   const [partyData, setPartyData] = useState(location.state?.data ?? null)
+  const [artistsData, setArtistsData] = useState(location.state?.artists ?? null)
+
   useEffect(() => {
     if (partyData === null) {
       const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
-      if (parsed !== null) setPartyData(parsed)
+      if (parsed !== null) {
+        const artParsed = JSON.parse(window.sessionStorage.getItem('artists') ?? 'null')
+        setPartyData(parsed)
+        setArtistsData(artParsed)
+      }
       else navigate('/')
     }
   }, [])
@@ -38,7 +44,7 @@ export default function MainScene() {
     else cardUnderRef.current.style.setProperty("background-color", "var(--rel-outlier)")
   }, [phase, index, chunk])
 
-  if (partyData === null) return null
+  if (partyData === null || artistsData === null) return null
 
   let speaker = ''
   let line = ''
@@ -92,8 +98,20 @@ export default function MainScene() {
           </div>
         </div>
         
-        <Canvas style={{ width: '100%', height: '100%' }} camera={{ position: [0, 1, 4] }}>
-          <Character url="/man.glb" position={[0, 0, 0]} />
+        <Canvas style={{ width: '100%', height: '60vh'}} camera={{ position: [0, 0, 4] }}>
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[3, 5, 2]} intensity={1} />
+          <Suspense fallback={null}>
+            {artistsData.map((artist, i) => (
+              <Character
+                key={artist.id}
+                url="/man.glb"
+                rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
+                position={[(i - (artistsData.length - 1) / 2) * 2, -2, 0]}
+                imgURL={artist.image}
+              />
+            ))}
+          </Suspense>
         </Canvas>
       </div>
 

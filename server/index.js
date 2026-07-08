@@ -202,7 +202,8 @@ app.get('/script', async function(req, res) {
   }
 
   try {
-    res.json(await buildScript(req));
+    const script = await buildScript(req)
+    res.json({ script, artists: req.session.artists })
   } catch (err) {
     if (err.response?.status !== 401) {
       console.error('Failed to build script:', err.message);
@@ -215,7 +216,8 @@ app.get('/script', async function(req, res) {
     }
 
     try {
-      res.json(await buildScript(req));
+    const script = await buildScript(req)
+    res.json({ script, artists: req.session.artists })
     } catch (retryErr) {
       console.error('Failed to build script after token refresh:', retryErr.message);
       res.status(502).json({ error: 'script_generation_failed', message: 'Could not generate the party script. Please try again.' });

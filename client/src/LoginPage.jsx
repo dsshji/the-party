@@ -7,7 +7,8 @@ export default function LoginPage() {
   useEffect(() => {
     const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
     if (parsed !== null) {
-      navigate('/main', { state: { data: parsed } })
+      const artists = JSON.parse(window.sessionStorage.getItem('artists') ?? 'null')
+      navigate('/main', { state: { data: parsed, artists } })
       return
     }
     const hash = window.location.hash
