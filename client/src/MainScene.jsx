@@ -92,7 +92,7 @@ export default function MainScene() {
           </div>
         </div>
         
-        <Canvas style={{ width: '100%', height: '400px' }} camera={{ position: [0, 1, 4] }}>
+        <Canvas style={{ width: '100%', height: '100%' }} camera={{ position: [0, 1, 4] }}>
           <Character url="/man.glb" position={[0, 0, 0]} />
         </Canvas>
       </div>
