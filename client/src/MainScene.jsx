@@ -1,5 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
+import { Canvas } from '@react-three/fiber'
+import Character from './Character.jsx'
 
 export default function MainScene() {
   const location = useLocation()
@@ -22,9 +24,22 @@ export default function MainScene() {
   const [trackNum, setTrack] = useState(0)
   const cardUnderRef = useRef(null)
 
+  const chunk = partyData ? partyData[PHASES[phase]] : null
+
+  useEffect(() => {
+    if (!chunk || !cardUnderRef.current) return
+    if (phase !== 0) {
+      cardUnderRef.current.style.setProperty("background-color", "var(--rel-neutral)")
+      return
+    }
+    const relationship = chunk[index].relationship
+    if (relationship === "ally") cardUnderRef.current.style.setProperty("background-color", "var(--rel-ally)")
+    else if (relationship === "opposite") cardUnderRef.current.style.setProperty("background-color", "var(--rel-opposite)")
+    else cardUnderRef.current.style.setProperty("background-color", "var(--rel-outlier)")
+  }, [phase, index, chunk])
+
   if (partyData === null) return null
 
-  const chunk = partyData[PHASES[phase]]
   let speaker = ''
   let line = ''
 
@@ -39,17 +54,6 @@ export default function MainScene() {
     line = chunk[index].line
   }
 
-  useEffect(() => {
-    if (phase !== 0 || !cardUnderRef.current) {
-      cardUnderRef.current.style.setProperty("background-color", "var(--rel-neutral)")
-      return
-    }
-    const relationship = chunk[index].relationship
-    if (relationship === "ally") cardUnderRef.current.style.setProperty("background-color", "var(--rel-ally)")
-    else if (relationship === "opposite") cardUnderRef.current.style.setProperty("background-color", "var(--rel-opposite)")
-    else cardUnderRef.current.style.setProperty("background-color", "var(--rel-outlier)")
-  }, [phase, index, chunk])
-
   function handleClick() {
     if (phase === 1) {
       if (index < chunk[trackNum].dialogues.length - 1) setIndex(index + 1)
@@ -62,7 +66,13 @@ export default function MainScene() {
         setIndex(0)
       }
     }
-    else if (phase === 3 && index === chunk.dialogues.length - 1) navigate('/end');
+    else if (phase === 3 && index === chunk.dialogues.length - 1) {
+      navigate('/end')
+      setPhase(0)
+      setIndex(0)
+      setTrack(0)
+    }
+
     else if (index === chunk.length - 1) {
       setPhase(phase + 1)
       setIndex(0)
@@ -81,6 +91,10 @@ export default function MainScene() {
             </div>
           </div>
         </div>
+        
+        <Canvas style={{ width: '100%', height: '400px' }} camera={{ position: [0, 1, 4] }}>
+          <Character url="/man.glb" position={[0, 0, 0]} />
+        </Canvas>
       </div>
 
       <footer className="page-footer">
