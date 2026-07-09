@@ -376,6 +376,7 @@ p {
   align-self: center;
   width: fit-content;
   height: fit-content;
+  min-width: 250px;
 }
 
 .card-content {

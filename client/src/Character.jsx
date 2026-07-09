@@ -1,4 +1,4 @@
-import { useGLTF, useAnimations, useTexture } from '@react-three/drei'
+import { useGLTF, useAnimations, useTexture, Html } from '@react-three/drei'
 import { useRef, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
@@ -8,7 +8,7 @@ import { SkeletonUtils } from 'three-stdlib'
 // 1x1 gray pixel, used when an artist has no portrait image
 const FALLBACK_TEXTURE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
-export default function Character({ url, rotation, position, imgURL, speaking }) {
+export default function Character({ url, rotation, position, imgURL, speaking, cardUnderRef, speaker, line }) {
   const texture = useTexture(imgURL ?? FALLBACK_TEXTURE_URL);
   const hasImage = Boolean(imgURL)
   const ref = useRef()
@@ -83,6 +83,18 @@ useEffect(() => {
   return (
     <group position={position} rotation={rotation}>
       <primitive ref={ref} object={cloned} scale={2} />
+      {speaking && (
+        <Html position={[0, 4, 0]} center>
+          <div className="card-under" ref={cardUnderRef}>
+            <div className="card">
+              <div className="card-content">
+                <p className="dialogue">{line}</p>
+              </div>
+            </div>
+          </div>
+        </Html>
+      )}
+
     </group>
   )
 }

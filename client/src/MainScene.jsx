@@ -29,6 +29,7 @@ export default function MainScene() {
   // for TRACK_PLAY phase
   const [trackNum, setTrack] = useState(0)
   const cardUnderRef = useRef(null)
+  const cardPos = useRef(null)
 
   const chunk = partyData ? partyData[PHASES[phase]] : null
 
@@ -42,6 +43,12 @@ export default function MainScene() {
     if (relationship === "ally") cardUnderRef.current.style.setProperty("background-color", "var(--rel-ally)")
     else if (relationship === "opposite") cardUnderRef.current.style.setProperty("background-color", "var(--rel-opposite)")
     else cardUnderRef.current.style.setProperty("background-color", "var(--rel-outlier)")
+  }, [phase, index, chunk])
+
+
+  useEffect(() => {
+    if (!chunk || !cardPos.current) return
+    cardPos.current.style.setProperty("background-color", "var(--rel-outlier)")
   }, [phase, index, chunk])
 
   if (partyData === null || artistsData === null) return null
@@ -89,14 +96,6 @@ export default function MainScene() {
   return (
     <>
       <div className="hero-content" onClick={handleClick}>
-        <div className="card-under" ref={cardUnderRef}>
-          <div className="card">
-            <div className="card-content">
-              <p className="dialogue">{speaker}</p>
-              <p className="dialogue">{line}</p>
-            </div>
-          </div>
-        </div>
         
         <Canvas style={{ width: '100%', height: '60vh'}} camera={{ position: [0, 0, 4] }}>
           <ambientLight intensity={0.6} />
@@ -107,9 +106,12 @@ export default function MainScene() {
                 key={artist.id}
                 url="/man.glb"
                 rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
-                position={[(i - (artistsData.length - 1) / 2) * 2, -2, 0]}
+                position={[(i - (artistsData.length - 1) / 2) * 2, -2.5, 0]}
                 imgURL={artist.image}
                 speaking={ artist.id === speaker ? 1 : 0}
+                cardUnderRef={cardUnderRef}
+                speaker={speaker}
+                line={line}
               />
             ))}
           </Suspense>

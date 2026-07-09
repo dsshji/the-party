@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 
 export default function EndPage() {
   const navigate = useNavigate()
-  //TODO: add go back button to the title page & button with the party restarted
+  //TODO: fix main state when called with the button
 
   return (
     <>
