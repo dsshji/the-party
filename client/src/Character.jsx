@@ -3,21 +3,57 @@ import { useRef, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 
-// TODO: load more animations to glb existing + assign to diff characters diff idles / times
+// TODO: manage walk animation
 
-export default function Character({ url, rotation, position, imgURL }) {
+// 1x1 gray pixel, used when an artist has no portrait image
+const FALLBACK_TEXTURE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+
+export default function Character({ url, rotation, position, imgURL, speaking }) {
   const texture = useTexture(imgURL ?? FALLBACK_TEXTURE_URL);
   const hasImage = Boolean(imgURL)
   const ref = useRef()
   const boneRef = useRef()
   const { scene, animations } = useGLTF(url)
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
-  const { actions } = useAnimations(animations, ref)
 
-  useEffect(() => {
-    const firstAction = Object.values(actions)[0]
-    firstAction?.play();
-  }, [actions]);
+  const { animations: talkAnims1 } = useGLTF('/Talking1.glb')
+  const { animations: talkAnims2 } = useGLTF('/Talking2.glb')
+  const { animations: talkAnims3 } = useGLTF('/Talking3.glb')
+  const { animations: walkAnims } = useGLTF('/Walking.glb')
+  
+  const clips = useMemo(
+    () => [...animations, ...talkAnims1, ...talkAnims2, ...talkAnims3, ...walkAnims],
+    [animations, talkAnims1, talkAnims2, talkAnims3, walkAnims]
+  )
+  const { actions } = useAnimations(clips, ref)
+
+const currentAction = useRef(null)
+
+useEffect(() => {
+  const [idle, talk1, talk2, talk3, walk] = Object.values(actions)
+
+  let next
+  if (speaking === 1) {
+    const talkAnims = [talk1, talk2, talk3]
+    next = talkAnims[Math.floor(Math.random() * talkAnims.length)]
+  } else {
+    next = idle
+  }
+  if (!next) return
+
+  if (currentAction.current && currentAction.current !== next) {
+    const prev = currentAction.current
+    next.enabled = true
+    next.setEffectiveTimeScale(1)
+    next.setEffectiveWeight(1)
+    next.reset().play()
+    prev.crossFadeTo(next, 0.5, true)
+  } else if (!currentAction.current) {
+    next.reset().play()
+  }
+
+  currentAction.current = next
+}, [actions, speaking])
 
   useEffect(() => {
     cloned.traverse((child) => {

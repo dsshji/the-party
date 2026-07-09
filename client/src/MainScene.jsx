@@ -109,6 +109,7 @@ export default function MainScene() {
                 rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
                 position={[(i - (artistsData.length - 1) / 2) * 2, -2, 0]}
                 imgURL={artist.image}
+                speaking={ artist.id === speaker ? 1 : 0}
               />
             ))}
           </Suspense>
