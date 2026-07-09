@@ -28,12 +28,20 @@ import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+function stripLeakedLabels(line) {
+    if (typeof line !== 'string') return line;
+    const labelWords = ['Speaker', 'Target', 'Role'];
+    const chunk = `(?:${labelWords.join('|')})\\s*:[^:|]*:`;
+    const leadingLabel = new RegExp(`^(?:\\s*${chunk}\\s*[|\\s]*)+`, 'i');
+    return line.replace(leadingLabel, '').trim();
+}
+
 // batch all dialogue lines into one API call instead of one per line
 async function dialogueBatch(entries) {
     if (!entries.length) return [];
     const items = entries.map((e, i) => {
-        const targetLabel = e.target_type === 'track' ? `song "${e.target.name}"` : e.target.id;
-        return `${i + 1}. Speaker: ${e.speaker.id} (${e.speaker.subgenre}, vibes: ${e.speaker.vibes.join(', ')}) | Target: ${targetLabel} (vibes: ${e.target.vibes.join(', ')}, ${e.target_type}) | Relationship: ${e.event.relationship} | Context: ${e.reason} | Write one line from ${e.speaker.id}'s perspective about or toward ${targetLabel}.`;
+        const targetLabel = e.target_type === 'track' ? `song "${e.target.name}"` : 'the other guest';
+        return `${i + 1}. Speaker: this guest (${e.speaker.subgenre}, vibes: ${e.speaker.vibes.join(', ')}) | Target: ${targetLabel} (vibes: ${e.target.vibes.join(', ')}, ${e.target_type}) | Relationship: ${e.event.relationship} | Context: ${e.reason} | Write one line from this speaker's perspective about or toward the target.`;
     }).join('\n');
     const chatCompletion = await groq.chat.completions.create({
         messages: [
@@ -44,6 +52,7 @@ async function dialogueBatch(entries) {
                 Ally lines: dry and slightly backhanded. Approval expressed reluctantly.
                 Max 10 words per line. No greetings. Never explain the joke.
                 Only reference traits, genres, and vibes explicitly listed in the input. Do not invent cultural labels, nationalities, or genre tags not present in the data.
+                Never include the speaker/target labels, numbers, or any identifiers in the line itself — output only the spoken words.
                 Return ONLY a JSON object: { "lines": ["<line1>", "<line2>", ...] } — one string per numbered entry, in order.`
             },
             {
@@ -54,15 +63,16 @@ async function dialogueBatch(entries) {
         model: 'llama-3.1-8b-instant',
         response_format: { type: 'json_object' },
     });
-    return JSON.parse(chatCompletion.choices[0].message.content).lines;
+    const lines = JSON.parse(chatCompletion.choices[0].message.content).lines;
+    return lines.map(stripLeakedLabels);
 }
 
 // API call for Global Dominant Event
 async function dialogueGlobal(entries) {
     if (!entries.length) return [];
     const items = entries.map((e, i) => {
-        const targetLabel = e.target_type === 'track' ? `song "${e.target.name}"` : e.target.id;
-        return `${i + 1}. Speaker: ${e.speaker.id} (${e.speaker.subgenre}, vibes: ${e.speaker.vibes.join(', ')}) | Target: ${targetLabel} (vibes: ${e.target.vibes.join(', ')}, ${e.target_type}) | Relationship: ${e.event.relationship} | Context: ${e.reason} | Write one line from ${e.speaker.id}'s perspective about or toward ${targetLabel}.`;
+        const targetLabel = e.target_type === 'track' ? `song "${e.target.name}"` : 'the other guest';
+        return `${i + 1}. Speaker: this guest (${e.speaker.subgenre}, vibes: ${e.speaker.vibes.join(', ')}) | Target: ${targetLabel} (vibes: ${e.target.vibes.join(', ')}, ${e.target_type}) | Relationship: ${e.event.relationship} | Context: ${e.reason} | Write one line from this speaker's perspective about or toward the target.`;
     }).join('\n');
     const chatCompletion = await groq.chat.completions.create({
         messages: [
@@ -74,6 +84,7 @@ async function dialogueGlobal(entries) {
                 Author lines: funny self-praise with speaker's vibe based on tags.
                 Max 10 words per line. No greetings. Never explain the joke.
                 Only reference traits, genres, and vibes explicitly listed in the input. Do not invent cultural labels, nationalities, or genre tags not present in the data.
+                Never include the speaker/target labels, numbers, or any identifiers in the line itself — output only the spoken words.
                 Return ONLY a JSON object: { "lines": ["<line1>", "<line2>", ...] } — one string per numbered entry, in order.`
             },
             {
@@ -84,14 +95,15 @@ async function dialogueGlobal(entries) {
         model: 'llama-3.1-8b-instant',
         response_format: { type: 'json_object' },
     });
-    return JSON.parse(chatCompletion.choices[0].message.content).lines;
+    const lines = JSON.parse(chatCompletion.choices[0].message.content).lines;
+    return lines.map(stripLeakedLabels);
 }
 
 // API call for Party End event
 async function dialogueEnd(entries) {
     if (!entries.length) return [];
     const items = entries.map((e, i) =>
-        `${i + 1}. Role: ${e.role}, Speaker: ${e.speaker.id} (${e.speaker.subgenre}, vibes: ${e.speaker.vibes.join(', ')}) | Other guests' genres: ${e.othersSubgenres} | Write a closing remark from ${e.speaker.id}'s perspective on how the party went.`
+        `${i + 1}. Role: ${e.role}, Speaker: this guest (${e.speaker.subgenre}, vibes: ${e.speaker.vibes.join(', ')}) | Other guests' genres: ${e.othersSubgenres} | Write a closing remark from this speaker's perspective on how the party went.`
     ).join('\n');
     const chatCompletion = await groq.chat.completions.create({
         messages: [
@@ -104,6 +116,7 @@ async function dialogueEnd(entries) {
                 Style: Tomodachi Life — robotic, dry, deadpan, occasionally absurd. Never warm or enthusiastic.
                 Max 6 words per phrase. No goodbyes or greetings. Never explain the joke.
                 Only reference traits and vibes explicitly listed in the input. Do not invent cultural labels or genre tags not in the data.
+                Never include the speaker/target labels, numbers, or any identifiers in the line itself — output only the spoken words.
                 Return ONLY a JSON object: { "lines": ["<3-phrase remark for entry 1>", ...] } — one string per numbered entry, in order.`
             },
             {
@@ -114,7 +127,8 @@ async function dialogueEnd(entries) {
         model: 'llama-3.1-8b-instant',
         response_format: { type: 'json_object' },
     });
-    return JSON.parse(chatCompletion.choices[0].message.content).lines;
+    const lines = JSON.parse(chatCompletion.choices[0].message.content).lines;
+    return lines.map(stripLeakedLabels);
 }
 
 

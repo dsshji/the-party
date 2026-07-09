@@ -1,11 +1,18 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
 import Character from './Character.jsx'
+
+function Stage(props) {
+  const { scene } = useGLTF('/stage.glb')
+  return <primitive object={scene} {...props} />
+}
 
 export default function MainScene() {
   const location = useLocation()
   const navigate = useNavigate()
+
   //TODO: add sessionsStorage persistance
   const [partyData, setPartyData] = useState(location.state?.data ?? null)
   const [artistsData, setArtistsData] = useState(location.state?.artists ?? null)
@@ -28,30 +35,19 @@ export default function MainScene() {
   const [index, setIndex] = useState(0)
   // for TRACK_PLAY phase
   const [trackNum, setTrack] = useState(0)
-  const cardUnderRef = useRef(null)
-  const cardPos = useRef(null)
 
   const chunk = partyData ? partyData[PHASES[phase]] : null
 
-  useEffect(() => {
-    if (!chunk || !cardUnderRef.current) return
-    if (phase !== 0) {
-      cardUnderRef.current.style.setProperty("background-color", "var(--rel-neutral)")
-      return
-    }
-    const relationship = chunk[index].relationship
-    if (relationship === "ally") cardUnderRef.current.style.setProperty("background-color", "var(--rel-ally)")
-    else if (relationship === "opposite") cardUnderRef.current.style.setProperty("background-color", "var(--rel-opposite)")
-    else cardUnderRef.current.style.setProperty("background-color", "var(--rel-outlier)")
-  }, [phase, index, chunk])
-
-
-  useEffect(() => {
-    if (!chunk || !cardPos.current) return
-    cardPos.current.style.setProperty("background-color", "var(--rel-outlier)")
-  }, [phase, index, chunk])
-
   if (partyData === null || artistsData === null) return null
+
+  const REL_COLORS = {
+    ally: "var(--rel-ally)",
+    opposite: "var(--rel-opposite)",
+    outlier: "var(--rel-outlier)",
+  }
+  const bubbleColor = phase === 0
+    ? (REL_COLORS[chunk[index].relationship] ?? "var(--rel-outlier)")
+    : "var(--rel-neutral)"
 
   let speaker = ''
   let line = ''
@@ -97,19 +93,22 @@ export default function MainScene() {
     <>
       <div className="hero-content" onClick={handleClick}>
         
-        <Canvas style={{ width: '100%', height: '60vh'}} camera={{ position: [0, 0, 4] }}>
+        <Canvas style={{ width: '100%', height: '85vh'}} camera={{ position: [0, 0, 5.5] }}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 5, 2]} intensity={1} />
+          <Suspense fallback={null}>
+            <Stage scale={0.6} position={[-0.3, -3.7, -3.5]} rotation={[0, 1.75, -0.02]}/>
+          </Suspense>
           <Suspense fallback={null}>
             {artistsData.map((artist, i) => (
               <Character
                 key={artist.id}
                 url="/man.glb"
                 rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
-                position={[(i - (artistsData.length - 1) / 2) * 2, -2.5, 0]}
+                position={[(i - (artistsData.length - 1) / 2) * 1.5, -2.5, -0.5]}
                 imgURL={artist.image}
                 speaking={ artist.id === speaker ? 1 : 0}
-                cardUnderRef={cardUnderRef}
+                bubbleColor={bubbleColor}
                 speaker={speaker}
                 line={line}
               />
