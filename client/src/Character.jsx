@@ -83,7 +83,7 @@ useLayoutEffect(() => {
       <primitive ref={ref} object={cloned} scale={1.7} />
       {speaking && (
         <Html position={[0, 4, 0]} center>
-          <div className="card-under" style={{ backgroundColor: bubbleColor }}>
+          <div className="card-under" style={{ "--bubble-color": bubbleColor }}>
             <div className="card">
               <div className="card-content">
                 <p className="dialogue">{line}</p>

@@ -16,12 +16,13 @@
   --rel-ally: #00e5ff;
   --rel-opposite: #ff018f;
   --rel-outlier: #ffcc00;
-  --rel-neutral: #6b6f99;
+  --rel-neutral: #7b2fff;
 
   /* text */
   --text-primary: #f0f0ff;
   --text-secondary: #a0a4cc;
   --text-dim: #5a5e88;
+  --bubble-wash: #e8e6df;
 
   /* fonts */
   --font-heading: 'Space Grotesk', sans-serif;
@@ -358,16 +359,25 @@ p {
 }
 
 .card-under {
-  padding: 12px;
-  border-radius: 30px;
+  padding: 30px;
   z-index: 1;
-  background-color: var(--rel-neutral);
+  border-radius: 70px;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--bubble-color, var(--rel-neutral)) 90%, transparent) 0%,
+    color-mix(in srgb, var(--bubble-color, var(--rel-neutral)) 30%, transparent) 55%,
+    transparent 85%
+  );
 }
 
 .card {
   margin: 0 auto;
-  background-color: var(--text-primary);
-  border-radius: 30px;
+  background: radial-gradient(
+    ellipse at center,
+    var(--bubble-wash) 40%,
+    color-mix(in srgb, var(--bubble-wash) 60%, transparent) 100%
+  );
+  border-radius: 70px;
   z-index: 1;
   position: relative;
   display: flex;
@@ -397,4 +407,3 @@ code {
   padding: 4px 8px;
   background: var(--bg-smoke);
 }
-

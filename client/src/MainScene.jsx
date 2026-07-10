@@ -17,9 +17,9 @@ function Lights({ pos, ...props }) {
         light.target.updateMatrixWorld()
       }
     }}
-    intensity={600}
+    intensity={400}
     distance={12}
-    angle={0.5} 
+    angle={0.55} 
     penumbra={0.9}
     volumetric={true}
     opacity={0.4}
