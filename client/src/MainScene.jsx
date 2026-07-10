@@ -1,12 +1,31 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { useGLTF } from '@react-three/drei'
+import { useGLTF, SpotLight  } from '@react-three/drei'
 import Character from './Character.jsx'
 
 function Stage(props) {
   const { scene } = useGLTF('/stage.glb')
   return <primitive object={scene} {...props} />
+}
+
+function Lights({ pos, ...props }) {
+  return <SpotLight
+    ref={(light) => {
+      if (light) {
+        light.target.position.set(...pos)
+        light.target.updateMatrixWorld()
+      }
+    }}
+    intensity={600}
+    distance={12}
+    angle={0.5} 
+    penumbra={0.9}
+    volumetric={true}
+    opacity={0.4}
+    anglePower={8}
+    {...props}
+  />
 }
 
 export default function MainScene() {
@@ -96,6 +115,9 @@ export default function MainScene() {
         <Canvas style={{ width: '100%', height: '85vh'}} camera={{ position: [0, 0, 5.5] }}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 5, 2]} intensity={1} />
+          <Lights pos={[2, -4, -3]} position={[0, 3, 0]} color={'#ff018f'} />
+          <Lights pos={[-2, -4, -3]} position={[0, 3, 0]} color={'#00e5ff'} />
+          <Lights pos={[0, -3, -4.5]} position={[0, 3, 0]} color={'#ffcc00'} />
           <Suspense fallback={null}>
             <Stage scale={0.6} position={[-0.3, -3.7, -3.5]} rotation={[0, 1.75, -0.02]}/>
           </Suspense>

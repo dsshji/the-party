@@ -30,26 +30,24 @@ export default function Character({ url, rotation, position, imgURL, speaking, b
 const currentAction = useRef(null)
 
 useLayoutEffect(() => {
-  const [idle, talk1, talk2, talk3, walk] = Object.values(actions)
+  const idle = actions['mixamo.com']
+  const talkAnims = [actions['talking1.com'], actions['talking2.com'], actions['talking3.com']]
 
   let next
   if (speaking === 1) {
-    const talkAnims = [talk1, talk2, talk3]
     next = talkAnims[Math.floor(Math.random() * talkAnims.length)]
   } else {
     next = idle
   }
   if (!next) return
 
+  next.enabled = true
+  next.setEffectiveTimeScale(1)
+  next.setEffectiveWeight(1)
+  next.reset().play()
+
   if (currentAction.current && currentAction.current !== next) {
-    const prev = currentAction.current
-    next.enabled = true
-    next.setEffectiveTimeScale(1)
-    next.setEffectiveWeight(1)
-    next.reset().play()
-    prev.crossFadeTo(next, 0.5, true)
-  } else if (!currentAction.current) {
-    next.reset().play()
+    currentAction.current.crossFadeTo(next, 0.5, true)
   }
 
   currentAction.current = next
