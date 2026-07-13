@@ -1,5 +1,6 @@
 import { useGLTF, useAnimations, useTexture, Html } from '@react-three/drei'
-import { useRef, useEffect, useLayoutEffect, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useRef, useState, useEffect, useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 
@@ -8,11 +9,13 @@ import { SkeletonUtils } from 'three-stdlib'
 // 1x1 gray pixel, used when an artist has no portrait image
 const FALLBACK_TEXTURE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
-export default function Character({ url, rotation, position, imgURL, speaking, bubbleColor, speaker, line }) {
+export default function Character({ url, rotation, positionFin, imgURL, speaking, bubbleColor, line, index, onArrived }) {
   const texture = useTexture(imgURL ?? FALLBACK_TEXTURE_URL);
   const hasImage = Boolean(imgURL)
   const ref = useRef()
-  const boneRef = useRef()
+  const [hasArrived, setHasArrived] = useState(false)
+  const groupRef = useRef()
+  const targetPos = useMemo(() => new THREE.Vector3(...positionFin), [positionFin])
   const { scene, animations } = useGLTF(url)
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
 
@@ -20,38 +23,69 @@ export default function Character({ url, rotation, position, imgURL, speaking, b
   const { animations: talkAnims2 } = useGLTF('/Talking2.glb')
   const { animations: talkAnims3 } = useGLTF('/Talking3.glb')
   const { animations: walkAnims } = useGLTF('/Walking.glb')
-  
+
   const clips = useMemo(
     () => [...animations, ...talkAnims1, ...talkAnims2, ...talkAnims3, ...walkAnims],
     [animations, talkAnims1, talkAnims2, talkAnims3, walkAnims]
   )
   const { actions } = useAnimations(clips, ref)
 
-const currentAction = useRef(null)
+  const currentAction = useRef(null)
 
-useLayoutEffect(() => {
-  const idle = actions['mixamo.com']
-  const talkAnims = [actions['talking1.com'], actions['talking2.com'], actions['talking3.com']]
+  useEffect(() => {
+    const angle = rotation[1]
+    const forward = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle))
+    const spawn = targetPos.clone().addScaledVector(forward, -6)
+    spawn.y -= 0.5
+    groupRef.current.position.copy(spawn)
 
-  let next
-  if (speaking === 1) {
-    next = talkAnims[Math.floor(Math.random() * talkAnims.length)]
-  } else {
-    next = idle
-  }
-  if (!next) return
+    const walk = actions['walking']
+    if (walk) {
+      walk.reset().play()
+      currentAction.current = walk
+    }
+  }, [])
 
-  next.enabled = true
-  next.setEffectiveTimeScale(1)
-  next.setEffectiveWeight(1)
-  next.reset().play()
+  const WALK_SPEED = 2
 
-  if (currentAction.current && currentAction.current !== next) {
-    currentAction.current.crossFadeTo(next, 0.5, true)
-  }
+  useFrame((_, delta) => {
+    if (!groupRef.current || hasArrived) return
+    const toTarget = targetPos.clone().sub(groupRef.current.position)
+    const dist = toTarget.length()
+    const step = WALK_SPEED * delta
+    if (step >= dist) {
+      groupRef.current.position.copy(targetPos)
+      setHasArrived(true)
+      onArrived?.()
+      return
+    }
+    groupRef.current.position.addScaledVector(toTarget.normalize(), step)
+  })
 
-  currentAction.current = next
-}, [actions, speaking])
+  useLayoutEffect(() => {
+    if (!hasArrived) return
+    const idle = actions['mixamo.com']
+    const talkAnims = [actions['talking1.com'], actions['talking2.com'], actions['talking3.com']]
+
+    let next
+    if (speaking === 1) {
+      next = talkAnims[Math.floor(Math.random() * talkAnims.length)]
+    } else {
+      next = idle
+    }
+    if (!next) return
+
+    next.enabled = true
+    next.setEffectiveTimeScale(1)
+    next.setEffectiveWeight(1)
+    next.reset().play()
+
+    if (currentAction.current && currentAction.current !== next) {
+      currentAction.current.crossFadeTo(next, 0.5, true)
+    }
+
+    currentAction.current = next
+  }, [actions, speaking, hasArrived])
 
   useEffect(() => {
     cloned.traverse((child) => {
@@ -79,7 +113,7 @@ useLayoutEffect(() => {
   }, [cloned, texture]);
 
   return (
-    <group position={position} rotation={rotation}>
+    <group ref={groupRef} rotation={rotation}>
       <primitive ref={ref} object={cloned} scale={1.7} />
       {speaking && (
         <Html position={[0, 4, 0]} center>

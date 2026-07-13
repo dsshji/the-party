@@ -153,7 +153,10 @@ export function generateArrivalSequence(artists, relArtists) {
     return sequence;
 }
 
+const FIRST_ARRIVAL_LINE = "So here's a party here huh...";
+
 export async function getArrivalScript(sequence, guestList_artists, relArtists) {
+    const firstArrival = sequence.find(e => !e.target);
     const events = sequence.filter(e => e.target);
     const entries = events.map(event => {
         const speaker = guestList_artists.find(a => a.id === event.speaker);
@@ -166,7 +169,11 @@ export async function getArrivalScript(sequence, guestList_artists, relArtists) 
         return { event, speaker, target, reason: relationshipData?.reason || '', target_type: 'artist' };
     });
     const lines = await dialogueBatch(entries);
-    return entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i], relationship: e.event.relationship }));
+    const script = entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i], relationship: e.event.relationship }));
+    if (firstArrival) {
+        script.unshift({ speaker: firstArrival.speaker, line: FIRST_ARRIVAL_LINE, relationship: 'neutral' });
+    }
+    return script;
 }
 
 // =================== TRACK_PLAY ======================================

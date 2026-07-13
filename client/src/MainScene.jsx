@@ -29,6 +29,9 @@ function Lights({ pos, ...props }) {
 }
 
 export default function MainScene() {
+  const [arrived, setArrived] = useState(new Set())
+  const [settled, setSettled] = useState(new Set())
+
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -83,6 +86,20 @@ export default function MainScene() {
   }
 
   function handleClick() {
+    if (phase === 0) {
+      if (!arrived.has(speaker)) {
+        setArrived(prev => new Set(prev).add(speaker))
+        return
+      }
+      if (!settled.has(speaker)) return
+      if (index === chunk.length - 1) {
+        setPhase(phase + 1)
+        setIndex(0)
+      } else {
+        setIndex(index + 1)
+      }
+      return
+    }
     if (phase === 1) {
       if (index < chunk[trackNum].dialogues.length - 1) setIndex(index + 1)
       else if (index === chunk[trackNum].dialogues.length - 1) {
@@ -121,21 +138,24 @@ export default function MainScene() {
           <Suspense fallback={null}>
             <Stage scale={0.6} position={[-0.3, -3.7, -3.5]} rotation={[0, 1.75, -0.02]}/>
           </Suspense>
-          <Suspense fallback={null}>
-            {artistsData.map((artist, i) => (
-              <Character
-                key={artist.id}
-                url="/man.glb"
-                rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
-                position={[(i - (artistsData.length - 1) / 2) * 1.5, -2.5, -0.5]}
-                imgURL={artist.image}
-                speaking={ artist.id === speaker ? 1 : 0}
-                bubbleColor={bubbleColor}
-                speaker={speaker}
-                line={line}
-              />
-            ))}
-          </Suspense>
+          { artistsData.filter(a => arrived.has(a.id)).map((artist) => {
+            const i = artistsData.indexOf(artist)
+            return (
+              <Suspense key={artist.id} fallback={null}>
+                <Character
+                  url="/man.glb"
+                  rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
+                  positionFin={[(i - (artistsData.length - 1) / 2) * 1.5, -2.5, -0.5]}
+                  imgURL={artist.image}
+                  speaking={ artist.id === speaker && (phase !== 0 || settled.has(artist.id)) ? 1 : 0}
+                  bubbleColor={bubbleColor}
+                  line={line}
+                  index={[i, artistsData.length]}
+                  onArrived={() => setSettled(prev => prev.has(artist.id) ? prev : new Set(prev).add(artist.id))}
+                />
+              </Suspense>
+            )
+          })}
         </Canvas>
       </div>
 
