@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useState, useEffect, Suspense } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { useRef, useState, useEffect, Suspense } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, SpotLight  } from '@react-three/drei'
 import Character from './Character.jsx'
+import * as THREE from 'three'
 
 function Stage(props) {
   const { scene } = useGLTF('/stage.glb')
@@ -26,6 +27,18 @@ function Lights({ pos, ...props }) {
     anglePower={8}
     {...props}
   />
+}
+
+function Confetti(props) {
+  const { scene } = useGLTF('/confetti.glb')
+  const ref = useRef()
+  
+  useFrame((_, delta) => {
+    if (!ref.current) return
+    ref.current.rotation.x += delta * 0.3
+  })
+
+  return <primitive ref={ref} object={scene} {...props} />
 }
 
 export default function MainScene() {
@@ -129,8 +142,11 @@ export default function MainScene() {
     <>
       <div className="hero-content" onClick={handleClick}>
         
-        <Canvas style={{ width: '100%', height: '85vh'}} camera={{ position: [0, 0, 5.5] }}>
+        <Canvas style={{ width: '100%', height: '90vh'}} camera={{ position: [0, 0, 5.5] }}>
           <ambientLight intensity={0.6} />
+          <Suspense fallback={null}>
+            <Confetti scale={1} position={[0, 0.8, 1.8]} rotation={[0, 4.6, 0]} />
+          </Suspense>
           <directionalLight position={[3, 5, 2]} intensity={1} />
           <Lights pos={[2, -4, -3]} position={[0, 3, 0]} color={'#ff018f'} />
           <Lights pos={[-2, -4, -3]} position={[0, 3, 0]} color={'#00e5ff'} />
@@ -140,6 +156,7 @@ export default function MainScene() {
           </Suspense>
           { artistsData.filter(a => arrived.has(a.id)).map((artist) => {
             const i = artistsData.indexOf(artist)
+            console.log(speaker)
             return (
               <Suspense key={artist.id} fallback={null}>
                 <Character
