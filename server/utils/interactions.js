@@ -169,9 +169,9 @@ export async function getArrivalScript(sequence, guestList_artists, relArtists) 
         return { event, speaker, target, reason: relationshipData?.reason || '', target_type: 'artist' };
     });
     const lines = await dialogueBatch(entries);
-    const script = entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i], relationship: e.event.relationship }));
+    const script = entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i], target: e.event.target, relationship: e.event.relationship }));
     if (firstArrival) {
-        script.unshift({ speaker: firstArrival.speaker, line: FIRST_ARRIVAL_LINE, relationship: 'neutral' });
+        script.unshift({ speaker: firstArrival.speaker, line: FIRST_ARRIVAL_LINE, target: null, relationship: 'neutral' });
     }
     return script;
 }

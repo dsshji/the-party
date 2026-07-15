@@ -10,6 +10,7 @@ function Stage(props) {
   return <primitive object={scene} {...props} />
 }
 
+/*
 function Lights({ pos, ...props }) {
   return <SpotLight
     ref={(light) => {
@@ -18,15 +19,52 @@ function Lights({ pos, ...props }) {
         light.target.updateMatrixWorld()
       }
     }}
-    intensity={400}
+    intensity={300}
     distance={12}
-    angle={0.55} 
+    angle={0.5} 
     penumbra={0.9}
     volumetric={true}
     opacity={0.4}
     anglePower={8}
     {...props}
   />
+}
+*/
+
+function DimmableSpot({ active = true, full = 400, pos, ...props }) {
+  const ref = useRef()
+  const cone = useRef()
+
+  useEffect(() => {
+    if (!ref.current || !pos) return
+    pos[2] -= 0.5
+    ref.current.target.position.set(...pos)
+    ref.current.target.updateMatrixWorld()
+  }, [pos[0], pos[1], pos[2]])
+
+  useFrame((_, delta) => {
+    if (!ref.current) return
+
+    if (!cone.current) {
+      ref.current.traverse(o => {
+        if (o.material?.uniforms?.opacity) cone.current = o.material
+      })
+    }
+
+    ref.current.intensity = THREE.MathUtils.damp(ref.current.intensity, active ? full : 0, 5, delta)
+
+    if (cone.current) {
+      cone.current.uniforms.opacity.value = THREE.MathUtils.damp(
+        cone.current.uniforms.opacity.value,
+        active ? 0.4 : 0,
+        5,
+        delta
+      )
+    }
+  })
+
+  return <SpotLight ref={ref} intensity={0} distance={12} angle={0.5} penumbra={0.9}
+    volumetric opacity={0.4} anglePower={8} {...props} />
 }
 
 function Confetti(props) {
@@ -39,6 +77,10 @@ function Confetti(props) {
   })
 
   return <primitive ref={ref} object={scene} {...props} />
+}
+
+function stagePos(i, n) {
+  return [(i - (n - 1) / 2) * 1.5, -2.5, -0.5]
 }
 
 export default function MainScene() {
@@ -66,6 +108,9 @@ export default function MainScene() {
 
   const PHASES = ['ARRIVAL', 'TRACK_PLAY', 'ARTIST_DOMINANT', 'PARTY_END']
 
+  // FOR DEBUG
+  console.log(partyData)
+
   const [phase, setPhase] = useState(0)
   const [index, setIndex] = useState(0)
   // for TRACK_PLAY phase
@@ -86,16 +131,24 @@ export default function MainScene() {
 
   let speaker = ''
   let line = ''
+  let target = ''
 
   if (phase === 1) {
     speaker = chunk[trackNum].dialogues[index].speaker
     line = chunk[trackNum].dialogues[index].line
+    target = ''
   } else if (phase === 3) {
     speaker = chunk.dialogues[index].speaker
     line = chunk.dialogues[index].line
+    target = ''
+  } else if (phase === 0) {
+    speaker = chunk[index].speaker
+    line = chunk[index].line
+    target = chunk[index].target
   } else {
     speaker = chunk[index].speaker
     line = chunk[index].line
+    target = ''
   }
 
   function handleClick() {
@@ -138,31 +191,34 @@ export default function MainScene() {
     else setIndex(index + 1)
   }
 
+  const lit = new Set([speaker, target].filter(Boolean))
+  const anyoneSpeaking = lit.size > 0
+
   return (
     <>
       <div className="hero-content" onClick={handleClick}>
         
         <Canvas style={{ width: '100%', height: '90vh'}} camera={{ position: [0, 0, 5.5] }}>
-          <ambientLight intensity={0.6} />
+          <ambientLight intensity={0.3} />
           <Suspense fallback={null}>
             <Confetti scale={1} position={[0, 0.8, 1.8]} rotation={[0, 4.6, 0]} />
           </Suspense>
-          <directionalLight position={[3, 5, 2]} intensity={1} />
-          <Lights pos={[2, -4, -3]} position={[0, 3, 0]} color={'#ff018f'} />
-          <Lights pos={[-2, -4, -3]} position={[0, 3, 0]} color={'#00e5ff'} />
-          <Lights pos={[0, -3, -4.5]} position={[0, 3, 0]} color={'#ffcc00'} />
+          <directionalLight position={[3, 5, 2]} intensity={0.7} />
+          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[2, -4, -2.5]} position={[0, 3, 0]} color={'#ff018f'} />
+          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[-2, -4, -2.5]} position={[0, 3, 0]} color={'#00e5ff'} />
+          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[0, -3, -4.5]} position={[0, 3, 0]} color={'#ffcc00'} />
           <Suspense fallback={null}>
             <Stage scale={0.6} position={[-0.3, -3.7, -3.5]} rotation={[0, 1.75, -0.02]}/>
           </Suspense>
           { artistsData.filter(a => arrived.has(a.id)).map((artist) => {
             const i = artistsData.indexOf(artist)
-            console.log(speaker)
             return (
               <Suspense key={artist.id} fallback={null}>
+                <DimmableSpot angle={0.25} active={lit.has(artist.id)} pos={ stagePos(i, artistsData.length) } position={[0, 3, 0]} color={'#fff'} />
                 <Character
                   url="/man.glb"
                   rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
-                  positionFin={[(i - (artistsData.length - 1) / 2) * 1.5, -2.5, -0.5]}
+                  positionFin={ stagePos(i, artistsData.length) }
                   imgURL={artist.image}
                   speaking={ artist.id === speaker && (phase !== 0 || settled.has(artist.id)) ? 1 : 0}
                   bubbleColor={bubbleColor}
