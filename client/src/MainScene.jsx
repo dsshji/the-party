@@ -234,7 +234,7 @@ export default function MainScene() {
 
       <footer className="page-footer">
         <p className="footer-text">all rights reserved</p>
-        <p className="footer-text">created by dsshji</p>
+        <a className="footer-text" href='https://github.com/dsshji'>created by dsshji</a>
       </footer>
     </>
   )

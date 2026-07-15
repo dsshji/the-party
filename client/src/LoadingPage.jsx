@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Button from './Button.jsx'
 
 const SPOTIFY_SCRIPT = 'http://127.0.0.1:8000/script'
 
@@ -25,6 +26,10 @@ export default function LoadingPage() {
           const status = error.response?.status
           if (status === 401) {
             setError('Your Spotify session expired. Please log in again.')
+          } else if (status === 403) {
+            setError('Oh-oh, something broke. Try again from another browser or report the error: dshxlva@yandex.ru.')
+          } else if (status === 429) {
+            setError('Seems this app is too popular. Please try again a bit later.')
           } else {
             setError('Something went wrong while calling your guests. Please try again.')
           }
@@ -37,7 +42,8 @@ export default function LoadingPage() {
       <>
         <div className="hero-content">
           <h2>{error}</h2>
-          <button className="gradient-btn" onClick={() => navigate('/login')}>Back to login</button>
+
+          <Button eventButton={navigate('/login')} textButton={"Back to login"} />
         </div>
 
         <footer className="page-footer">
@@ -56,7 +62,7 @@ export default function LoadingPage() {
 
       <footer className="page-footer">
         <p className="footer-text">all rights reserved</p>
-        <p className="footer-text">created by dsshji</p>
+        <a className="footer-text" href='https://github.com/dsshji'>created by dsshji</a>
       </footer>
     </>
   )
