@@ -86,10 +86,10 @@ function stagePos(i, n) {
 export default function MainScene() {
   const [arrived, setArrived] = useState(new Set())
   const [settled, setSettled] = useState(new Set())
+  const [trackReady, setTrackReady] = useState(false)
 
   const location = useLocation()
   const navigate = useNavigate()
-
   //TODO: add sessionsStorage persistance
   const [partyData, setPartyData] = useState(location.state?.data ?? null)
   const [artistsData, setArtistsData] = useState(location.state?.artists ?? null)
@@ -151,7 +151,16 @@ export default function MainScene() {
     target = ''
   }
 
+  // for TRACK_PLAY phase
+  useEffect(() => {
+    if (phase !== 1) return
+    setTrackReady(false)
+    const t = setTimeout(() => setTrackReady(true), 10000)
+    return () => clearTimeout(t)
+  }, [phase, trackNum])
+
   function handleClick() {
+    if (phase !== 0 && index !== 0 && !dialogueLive) return
     if (phase === 0) {
       if (!arrived.has(speaker)) {
         setArrived(prev => new Set(prev).add(speaker))
@@ -191,7 +200,12 @@ export default function MainScene() {
     else setIndex(index + 1)
   }
 
-  const lit = new Set([speaker, target].filter(Boolean))
+  const dialogueLive =
+    phase === 0 ? settled.has(speaker) && (!target || settled.has(target)) :
+    phase === 1 ? trackReady :
+    true
+
+  const lit = dialogueLive ? new Set([speaker, target].filter(Boolean)) : new Set()
   const anyoneSpeaking = lit.size > 0
 
   return (
@@ -220,7 +234,7 @@ export default function MainScene() {
                   rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
                   positionFin={ stagePos(i, artistsData.length) }
                   imgURL={artist.image}
-                  speaking={ artist.id === speaker && (phase !== 0 || settled.has(artist.id)) ? 1 : 0}
+                  speaking={ artist.id === speaker && dialogueLive ? 1 : 0 }
                   bubbleColor={bubbleColor}
                   line={line}
                   index={[i, artistsData.length]}
