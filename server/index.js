@@ -52,7 +52,7 @@ setInterval(() => {
 app.get('/', (req, res) => res.send('server works'))
 app.get('/login', function(req, res) {
   const state = generateRandomString(16);
-  const scope = 'user-read-private user-read-email user-top-read';
+  const scope = 'user-read-private user-read-email user-top-read streaming user-modify-playback-state user-read-playback-state';
 
   const params = new URLSearchParams({
     response_type: 'code',
@@ -152,6 +152,7 @@ async function getTopTracks(req) {
     'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=5',
     { headers: { 'Authorization': `Bearer ${req.session.token}`} }
   );
+  req.session.unformatTracks = response.data.items;
   const tracks = [];
   for (const item of response.data.items) {
     const formatted = await formatTrack(item);
@@ -195,6 +196,24 @@ async function buildScript(req) {
     ARTIST_DOMINANT: script_artistDominant, PARTY_END: script_partyEnd };
 }
 
+// refresh the client's access token
+app.get('/refresh', async function(req, res) {
+  if (!req.session.refreshToken) {
+    return res.status(401).json({ error: 'not_authenticated', message: 'No Spotify session found. Please log in again.' });
+  }
+
+  try {
+    const access_token = await refreshAccessToken(req);
+    if (!access_token) {
+      return res.status(401).json({ error: 'invalid_token', message: 'Your Spotify session expired. Please log in again.' });
+    }
+    res.json({ access_token });
+  } catch (err) {
+    console.error('Failed to refresh token:', err.message);
+    res.status(502).json({ error: 'refresh_failed', message: 'Could not refresh Spotify token.' });
+  }
+});
+
 // load script for the whole party
 app.get('/script', async function(req, res) {
   if (!req.session.token) {
@@ -203,7 +222,7 @@ app.get('/script', async function(req, res) {
 
   try {
     const script = await buildScript(req)
-    res.json({ script, artists: req.session.artists })
+    res.json({ script, artists: req.session.artists, tracks: req.session.unformatTracks })
   } catch (err) {
     if (err.response?.status !== 401) {
       console.error('Failed to build script:', err.message);
@@ -217,7 +236,7 @@ app.get('/script', async function(req, res) {
 
     try {
     const script = await buildScript(req)
-    res.json({ script, artists: req.session.artists })
+    res.json({ script, artists: req.session.artists, tracks: req.session.unformatTracks })
     } catch (retryErr) {
       console.error('Failed to build script after token refresh:', retryErr.message);
       res.status(502).json({ error: 'script_generation_failed', message: 'Could not generate the party script. Please try again.' });

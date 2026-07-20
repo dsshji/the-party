@@ -9,11 +9,17 @@ export default function LoginPage() {
     const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
     if (parsed !== null) {
       const artists = JSON.parse(window.sessionStorage.getItem('artists') ?? 'null')
-      navigate('/main', { state: { data: parsed, artists } })
+      const tracks = JSON.parse(window.sessionStorage.getItem('tracks') ?? 'null')
+      navigate('/main', { state: { data: parsed, artists, tracks } })
       return
     }
     const hash = window.location.hash
-    if (hash.includes('access_token')) navigate('/loading');
+    if (hash.includes('access_token')) {
+      const params = new URLSearchParams(hash.substring(1))
+      const token = params.get('access_token')
+      window.sessionStorage.setItem('token', token)
+      navigate('/loading')
+    }
   }, [])
 
   return (

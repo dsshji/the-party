@@ -12,14 +12,16 @@ export default function LoadingPage() {
   useEffect(() => {
     const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
     const artParsed = JSON.parse(window.sessionStorage.getItem('artists') ?? 'null')
+    const trackParsed = JSON.parse(window.sessionStorage.getItem('tracks') ?? 'null')
     if (parsed !== null) {
-      navigate('/main', { state: { data: parsed, artists: artParsed } })
+      navigate('/main', { state: { data: parsed, artists: artParsed, tracks: trackParsed } })
     } else {
       axios.get(SPOTIFY_SCRIPT, { withCredentials: true })
         .then(response => {
           window.sessionStorage.setItem('script', JSON.stringify(response.data.script))
           window.sessionStorage.setItem('artists', JSON.stringify(response.data.artists))
-          navigate('/main', { state: { data: response.data.script, artists: response.data.artists } })
+          window.sessionStorage.setItem('tracks', JSON.stringify(response.data.tracks))
+          navigate('/main', { state: { data: response.data.script, artists: response.data.artists, tracks: response.data.tracks } })
         })
         .catch(error => {
           console.log(error)

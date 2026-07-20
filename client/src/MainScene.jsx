@@ -3,6 +3,7 @@ import { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, SpotLight  } from '@react-three/drei'
 import Character from './Character.jsx'
+import WebPlayback from './WebPlayback.jsx'
 import * as THREE from 'three'
 
 function Stage(props) {
@@ -93,12 +94,15 @@ export default function MainScene() {
   //TODO: add sessionsStorage persistance
   const [partyData, setPartyData] = useState(location.state?.data ?? null)
   const [artistsData, setArtistsData] = useState(location.state?.artists ?? null)
+  const [tracksData, setTracksData] = useState(location.state?.tracks ?? null)
 
   useEffect(() => {
     if (partyData === null) {
       const parsed = JSON.parse(window.sessionStorage.getItem('script') ?? 'null')
       if (parsed !== null) {
         const artParsed = JSON.parse(window.sessionStorage.getItem('artists') ?? 'null')
+        const tracksParsed = JSON.parse(window.sessionStorage.getItem('tracks') ?? 'null')
+        setTracksData(tracksParsed)
         setPartyData(parsed)
         setArtistsData(artParsed)
       }
@@ -114,7 +118,7 @@ export default function MainScene() {
   const [phase, setPhase] = useState(0)
   const [index, setIndex] = useState(0)
   // for TRACK_PLAY phase
-  const [trackNum, setTrack] = useState(0)
+  const [trackNum, setTrackNum] = useState(0)
 
   const chunk = partyData ? partyData[PHASES[phase]] : null
 
@@ -178,7 +182,7 @@ export default function MainScene() {
     if (phase === 1) {
       if (index < chunk[trackNum].dialogues.length - 1) setIndex(index + 1)
       else if (index === chunk[trackNum].dialogues.length - 1) {
-        setTrack(trackNum + 1)
+        setTrackNum(trackNum + 1)
         setIndex(0)
       }
       if (trackNum === chunk.length - 1) {
@@ -190,7 +194,7 @@ export default function MainScene() {
       navigate('/end')
       setPhase(0)
       setIndex(0)
-      setTrack(0)
+      setTrackNum(0)
     }
 
     else if (index === chunk.length - 1) {
@@ -208,9 +212,24 @@ export default function MainScene() {
   const lit = dialogueLive ? new Set([speaker, target].filter(Boolean)) : new Set()
   const anyoneSpeaking = lit.size > 0
 
+  const [is_paused, setPaused] = useState(false);
+  const [is_active, setActive] = useState(true);
+  const [current_track, setTrack] = useState(null);
+
+  useEffect( () => {
+
+    if (phase === 1) {
+      setTrack(tracksData[trackNum])
+      console.log(tracksData)
+      console.log(trackNum)
+      console.log(tracksData[trackNum])
+    }
+  }, [trackNum, phase])
+
   return (
     <>
       <div className="hero-content" onClick={handleClick}>
+        { <WebPlayback token={sessionStorage.getItem('token')} track={current_track} /> }
         
         <Canvas style={{ width: '100%', height: '90vh'}} camera={{ position: [0, 0, 5.5] }}>
           <ambientLight intensity={0.3} />
