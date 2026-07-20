@@ -109,7 +109,7 @@ export default function MainScene() {
   const PHASES = ['ARRIVAL', 'TRACK_PLAY', 'ARTIST_DOMINANT', 'PARTY_END']
 
   // FOR DEBUG
-  console.log(partyData)
+  //console.log(partyData)
 
   const [phase, setPhase] = useState(0)
   const [index, setIndex] = useState(0)
