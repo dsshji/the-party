@@ -128,10 +128,12 @@ export default function MainScene() {
     ally: "var(--rel-ally)",
     opposite: "var(--rel-opposite)",
     outlier: "var(--rel-outlier)",
+    author: "var(--rel-outlier)",
   }
-  const bubbleColor = phase === 0
-    ? (REL_COLORS[chunk[index].relationship] ?? "var(--rel-outlier)")
-    : "var(--rel-neutral)"
+  const bubbleColor =
+    phase === 0 ? (REL_COLORS[chunk[index].relationship] ?? "var(--rel-outlier)") :
+    phase === 1 ? (REL_COLORS[chunk[trackNum].dialogues[index].relationship] ?? "var(--rel-neutral)") :
+    "var(--rel-neutral)"
 
   let speaker = ''
   let line = ''

@@ -50,6 +50,7 @@ async function dialogueBatch(entries) {
                 content: `You write short dialogue lines for characters at a music party.
                 Style: Tomodachi Life — robotic, dry, deadpan, occasionally absurd. Never warm or enthusiastic.
                 Ally lines: dry and slightly backhanded. Approval expressed reluctantly.
+                If Relationship is "author", the speaker's own song is playing — write a self-aware, self-referential line (deadpan pride, awkward self-consciousness, etc.), never react as if it were a stranger's song.
                 Max 10 words per line. No greetings. Never explain the joke.
                 Only reference traits, genres, and vibes explicitly listed in the input. Do not invent cultural labels, nationalities, or genre tags not present in the data.
                 Never include the speaker/target labels, numbers, or any identifiers in the line itself — output only the spoken words.
@@ -202,7 +203,7 @@ export async function trackReaction(sequence, guestList_artists, relArtists, tra
     const track_name = track.name;
     return {
         track_name,
-        dialogues: entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i] }))
+        dialogues: entries.map((e, i) => ({ speaker: e.event.speaker, line: lines[i], relationship: e.event.relationship }))
     };
 }
 
