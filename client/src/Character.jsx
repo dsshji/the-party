@@ -4,13 +4,11 @@ import { useRef, useState, useEffect, useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 
-// TODO: manage walk animation
-
 // 1x1 gray pixel, used when an artist has no portrait image
 const FALLBACK_TEXTURE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
 export default function Character({ url, rotation, positionFin, imgURL, speaking, bubbleColor, line, index, onArrived }) {
-  const texture = useTexture(imgURL ?? FALLBACK_TEXTURE_URL);
+  const texture = useTexture(imgURL ?? FALLBACK_TEXTURE_URL)
   const hasImage = Boolean(imgURL)
   const ref = useRef()
   const [hasArrived, setHasArrived] = useState(false)

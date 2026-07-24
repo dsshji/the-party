@@ -3,6 +3,7 @@ import { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, SpotLight  } from '@react-three/drei'
 import Character from './Character.jsx'
+import Discoball from './Discoball.jsx'
 import WebPlayback from './WebPlayback.jsx'
 import * as THREE from 'three'
 
@@ -239,17 +240,20 @@ export default function MainScene() {
             <Confetti scale={1} position={[0, 0.8, 1.8]} rotation={[0, 4.6, 0]} />
           </Suspense>
           <directionalLight position={[3, 5, 2]} intensity={0.7} />
-          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[2, -4, -2.5]} position={[0, 3, 0]} color={'#ff018f'} />
-          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[-2, -4, -2.5]} position={[0, 3, 0]} color={'#00e5ff'} />
-          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[0, -3, -4.5]} position={[0, 3, 0]} color={'#ffcc00'} />
+          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[2, -4, -2.5]} position={[0, 4, 0]} color={'#ff018f'} />
+          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[-2, -4, -2.5]} position={[0, 4, 0]} color={'#00e5ff'} />
+          <DimmableSpot opacity={anyoneSpeaking ? 0.05 : 0.4} full={anyoneSpeaking ? 60 : 400} pos={[0, -3, -4.5]} position={[0, 4, 0]} color={'#ffcc00'} />
           <Suspense fallback={null}>
             <Stage scale={0.6} position={[-0.3, -3.7, -3.5]} rotation={[0, 1.75, -0.02]}/>
+          </Suspense>
+          <Suspense>
+            <Discoball spinning={!dialogueLive} showPanel={phase === 1} imgURL={current_track?.album?.images?.[0]?.url} position={[0, 3, -1]} rotation={[0.5, 0, 0]} scale={0.7} />
           </Suspense>
           { artistsData.filter(a => arrived.has(a.id)).map((artist) => {
             const i = artistsData.indexOf(artist)
             return (
               <Suspense key={artist.id} fallback={null}>
-                <DimmableSpot angle={0.25} active={lit.has(artist.id)} pos={ stagePos(i, artistsData.length) } position={[0, 3, 0]} color={'#fff'} />
+                <DimmableSpot angle={0.25} active={lit.has(artist.id)} pos={ stagePos(i, artistsData.length) } position={[0, 4, 0]} color={'#fff'} />
                 <Character
                   url="/man.glb"
                   rotation={[0, i === (artistsData.length - 1) / 2 ? 0 : i < (artistsData.length - 1) / 2 ? 1 : -1, 0]}
